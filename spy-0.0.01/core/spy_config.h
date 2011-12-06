@@ -11,7 +11,15 @@ typedef uintptr_t       spy_uint_t;
 typedef intptr_t        spy_flag_t;
 
 #define spy_cdecl
-#define SPY_MAX_UINT32_VALUE  (uint32_t) 0xffffffff
 #define SPY_LONG_SIZE		  (sizeof(long))
+
+
+#define SPY_MAX_UINT32_VALUE  (uint32_t) 0xffffffff
+#define SPY_INT64_LEN   sizeof("-9223372036854775808") - 1
+
+
+#ifndef spy_inline
+#define spy_inline      inline
+#endif
 
 #endif

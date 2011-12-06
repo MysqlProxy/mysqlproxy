@@ -1,15 +1,6 @@
 #include <spy_core.h>
 #include <spy_config.h>
 
-u_char *
-spy_repl_char(u_char *dst, u_char src, spy_uint_t num) {
-	int i;
-	for (i = 0; i < num; i++) {
-		*dst++ = src;
-	}
-	return dst;
-}
-
 u_char * spy_cdecl
 spy_slprintf(u_char *buf, u_char *last, const char *fmt, ...) {
 	u_char *p;
@@ -31,12 +22,11 @@ spy_vslprintf(u_char *buf, u_char *last, const char *fmt, va_list args) {
 	u_char zero; // 填充字符
 	int64_t i64;
 	uint64_t ui64;
-	int32_t i32;
-	uint32_t ui32;
+	size_t len;
 	double d;
 	//size_t slen; // 传参进入的解码长度
 	spy_flag_t align; // 对齐方式默认 0 : 右对齐, 1 : 左对齐
-	spy_uint_t frac_width, width, hex, l_int, s_int, l_double, len;
+	spy_uint_t frac_width, width, hex, l_int, s_int;
 	// 小数字点，长整型int，短整形int，长双精度double
 
 	while (*fmt && buf < last) {
@@ -50,10 +40,10 @@ spy_vslprintf(u_char *buf, u_char *last, const char *fmt, va_list args) {
 			frac_width = 0;
 			l_int = 0;
 			s_int = 0;
-			l_double = 0;
 			r_fmt = fmt;
 			len = 0;
 			zero = ' ';
+			hex = 0;
 
 			// slen = (size_t) -1;
 			fmt++;
@@ -98,11 +88,11 @@ spy_vslprintf(u_char *buf, u_char *last, const char *fmt, va_list args) {
 				case 'l': // length
 					l_int = l_int + 1;
 					fmt++;
-					break;
+					continue;
 				case 'h':
 					s_int = s_int + 1;
 					fmt++;
-					break;
+					continue;
 				case 'x':
 					hex = 1;
 					fmt++;
@@ -124,29 +114,21 @@ spy_vslprintf(u_char *buf, u_char *last, const char *fmt, va_list args) {
 			case 's':
 				p = va_arg(args, u_char *);
 
-				if (align == 0) {
-					while (*p && buf < last) {
-						*buf++ = *p++;
-						len++;
-					}
-					buf = spy_repl_char(buf, zero,
-							spy_min(spy_ldiff(width, len), last - buf));
-				} else if (align == 1) {
-					while (*p) {
-						p++;
-						len++;
-					}
-					len = spy_min(len, last - buf);
-					buf = spy_repl_char(buf, zero, spy_ldiff(width, len));
-					buf = spy_cpymem(buf, p - len, len);
+				while (*p) {
+					p++;
+					len++;
 				}
+
+				buf = spy_printf_pad(buf, last, width, len, zero, p - len,
+						align);
 				fmt++;
 
 				continue;
 
 			case 'c':
-				c = va_arg(args, int);
-				*buf++ = (u_char) (c & 0xff);
+				c = (u_char) (((u_char) va_arg(args, int)) & 0xff);
+				buf = spy_printf_pad(buf, last, width, 1, zero, (u_char *) &c,
+						align);
 				fmt++;
 
 				continue;
@@ -156,7 +138,7 @@ spy_vslprintf(u_char *buf, u_char *last, const char *fmt, va_list args) {
 				if ((SPY_LONG_SIZE == 8 && l_int == 1) || l_int == 2) {
 					i64 = (int64_t) va_arg (args, int64_t);
 				} else {
-					i32 = (int32_t) va_arg(args, int32_t);
+					i64 = (int64_t) va_arg(args, int32_t);
 				}
 
 				break;
@@ -164,13 +146,14 @@ spy_vslprintf(u_char *buf, u_char *last, const char *fmt, va_list args) {
 				if ((SPY_LONG_SIZE == 8 && l_int == 1) || l_int == 2) {
 					ui64 = (uint64_t) va_arg (args, uint64_t);
 				} else {
-					ui32 = (uint32_t) va_arg (args, uint32_t);
+					ui64 = (uint64_t) va_arg (args, uint32_t);
 				}
 				break;
 			case 'p':
 				break;
 
 			case 'f':
+
 				d = (double) va_arg (args, double);
 				if (d < 0) {
 					*buf++ = '-';
@@ -186,9 +169,6 @@ spy_vslprintf(u_char *buf, u_char *last, const char *fmt, va_list args) {
 				continue;
 
 			case 'N':
-#if (SPY_WIN32)
-				*buf++ = CR;
-#endif
 				*buf++ = LF;
 				fmt++;
 
@@ -204,32 +184,107 @@ spy_vslprintf(u_char *buf, u_char *last, const char *fmt, va_list args) {
 				continue;
 			}
 
+			if (i64 < 0) {
+				*buf++ = '-';
+				ui64 = (uint64_t) - i64;
+
+			} else {
+				ui64 = (uint64_t) i64;
+			}
+
+			buf = spy_sprintf_num(buf, last, ui64, zero, align, hex, width);
+
+			fmt++;
+
 		} // END ELSE
 	} // END WHILE
 
 	return buf;
 } // END FUNCTION
 
+u_char *
+spy_printf_pad(u_char *buf, u_char *last, spy_uint_t width, size_t len,
+		u_char zero, u_char *p, spy_uint_t align) {
+
+	int i;
+	u_char *t;
+	width = spy_ldiff(width, len);
+
+	len = spy_min(len,(size_t) (last - buf));
+	t = buf;
+	if (align == 0) {
+		if (width > 0) {
+			buf = buf + len;
+		}
+	} else if (align == 1) {
+		if (width > 0) {
+			t = buf + width;
+		}
+	}
+
+	for (i = 0; i < width; i++) {
+		*buf++ = zero;
+	}
+
+	spy_memcpy(t, p, len);
+
+	return t + len + width;
+}
+
+u_char *
+spy_sprintf_num(u_char *buf, u_char *last, uint64_t ui64, u_char zero,
+		spy_uint_t align, spy_uint_t hex, spy_uint_t width) {
+
+	u_char *p, temp[SPY_INT64_LEN + 1];
+	uint32_t ui32;
+
+	p = temp + SPY_INT64_LEN;
+
+	if (hex == 0) {
+		if (ui64 <= SPY_MAX_UINT32_VALUE) {
+			ui32 = (uint32_t) ui64;
+			do {
+				*--p = (u_char) (ui32 % 10 + '0');
+			} while (ui32 /= 10);
+		} else {
+			do {
+				*--p = (u_char) (ui64 % 10 + '0');
+			} while (ui64 /= 10);
+		}
+	} else if (hex == 1) {
+	} else if (hex == 2) {
+
+	}
+
+	//len = (size_t) spy_min((last - buf), (temp + SPY_INT64_LEN) - p);
+	buf = spy_printf_pad(buf, last, width, (temp + SPY_INT64_LEN) - p, zero, p,
+			align);
+
+	return buf;
+}
+
 #ifdef _SPY_STRING_UNIT_TEST_
 
 int main() {
 #if 0
+
 	u_char buf[256];
 	u_char *p;
 
 	p = buf;
-	spy_repl_char(p, 'a', 10);
+	spy_printf_pad(p, 'a', 10);
 	buf[255] = '\0';
 	printf("%s\n", buf);
-
 #endif
-	u_char buf[256];
+
+	u_char buf[10];
 	u_char *p, *last;
-	last = buf + 256;
+	last = buf + 10;
 	p = buf;
-	int i = 20; //12345
-	p = spy_slprintf(p, last, "%+0*s%%%c\n", i, "Hello World", 'a');
+	p = spy_slprintf(p, last, "%+10d\n", 123);
 	write(1, buf, p - buf);
+	//write(1, c, 1);
+	// 1 11111000 000000000000000000000
 
 	exit(EXIT_SUCCESS);
 }
