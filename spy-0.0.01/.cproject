@@ -29,14 +29,14 @@
 <option defaultValue="gnu.c.optimization.level.none" id="gnu.c.compiler.exe.debug.option.optimization.level.388734213" name="Optimization Level" superClass="gnu.c.compiler.exe.debug.option.optimization.level" valueType="enumerated"/>
 <option id="gnu.c.compiler.exe.debug.option.debugging.level.1173205991" name="Debug Level" superClass="gnu.c.compiler.exe.debug.option.debugging.level" value="gnu.c.debugging.level.max" valueType="enumerated"/>
 <option id="gnu.c.compiler.option.preprocessor.def.symbols.213756183" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" valueType="definedSymbols">
-<listOptionValue builtIn="false" value="_SPY_MATH_UNIT_TEST_"/>
+<listOptionValue builtIn="false" value="_SPY_STRING_UNIT_TEST_"/>
 </option>
 <option id="gnu.c.compiler.option.include.paths.1818702311" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/spy-0.0.01/core}&quot;"/>
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/spy-0.0.01/os/unix}&quot;"/>
 </option>
 <option id="gnu.c.compiler.option.preprocessor.undef.symbol.1323571431" name="Undefined symbols (-U)" superClass="gnu.c.compiler.option.preprocessor.undef.symbol" valueType="undefDefinedSymbols">
-<listOptionValue builtIn="false" value="_SPY_STRING_UNIT_TEST_"/>
+<listOptionValue builtIn="false" value="_SPY_MATH_UNIT_TEST_"/>
 </option>
 <inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.980216141" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 </tool>

@@ -17,13 +17,15 @@ u_char *
 spy_vslprintf(u_char *buf, u_char *last, const char *fmt, va_list args) {
 
 	const char *r_fmt;
-	u_char *p; // buf 字符
-	int c; // char 临时字符
+	u_char *p, tempn[SPY_INT64_LEN + 1], tempf[SPY_DOUBLE_FRAC_LEN + 1],
+			tempr[SPY_INT64_LEN + SPY_DOUBLE_FRAC_LEN + 2], *pr;
+	int c, i; // char 临时字符
 	u_char zero; // 填充字符
 	int64_t i64;
 	uint64_t ui64;
 	size_t len;
-	double d;
+	double d, frac;
+
 	//size_t slen; // 传参进入的解码长度
 	spy_flag_t align; // 对齐方式默认 0 : 右对齐, 1 : 左对齐
 	spy_uint_t frac_width, width, hex, l_int, s_int;
@@ -153,12 +155,36 @@ spy_vslprintf(u_char *buf, u_char *last, const char *fmt, va_list args) {
 				break;
 
 			case 'f':
-
 				d = (double) va_arg (args, double);
+				frac_width = (frac_width == 0 ? (l_int > 0 ? 15 : 6)
+						: frac_width);
+				i = 1;
+				pr = tempr;
+				tempf[0] = '.';
+
 				if (d < 0) {
 					*buf++ = '-';
 					d = -d;
 				}
+
+				frac = spy_modf(d, &ui64);
+				p = tempn + SPY_INT64_LEN;
+				p = spy_sprintf_num(ui64, zero, align, 0, width, p);
+
+				do {
+					frac *= 10;
+					frac = spy_modf(frac, &ui64);
+					tempf[i] = ((u_char) ui64) + '0';
+					i++;
+				} while (i <= frac_width && frac != 0);
+
+				len = (tempn + SPY_INT64_LEN) - p + i;
+
+				pr = spy_cpymem(pr, p, (tempn + SPY_INT64_LEN) - p);
+				spy_memcpy(pr, tempf, i);
+
+				buf = spy_printf_pad(buf, last, width, len, zero, tempr, align);
+
 				fmt++;
 				continue;
 
@@ -192,8 +218,10 @@ spy_vslprintf(u_char *buf, u_char *last, const char *fmt, va_list args) {
 				ui64 = (uint64_t) i64;
 			}
 
-			buf = spy_sprintf_num(buf, last, ui64, zero, align, hex, width);
-
+			p = tempn + SPY_INT64_LEN;
+			p = spy_sprintf_num(ui64, zero, align, hex, width, p);
+			buf = spy_printf_pad(buf, last, width, (tempn + SPY_INT64_LEN) - p,
+					zero, p, align);
 			fmt++;
 
 		} // END ELSE
@@ -232,35 +260,38 @@ spy_printf_pad(u_char *buf, u_char *last, spy_uint_t width, size_t len,
 }
 
 u_char *
-spy_sprintf_num(u_char *buf, u_char *last, uint64_t ui64, u_char zero,
-		spy_uint_t align, spy_uint_t hex, spy_uint_t width) {
+spy_sprintf_num(uint64_t ui64, u_char zero, spy_uint_t align, spy_uint_t hex,
+		spy_uint_t width, u_char *pnum) {
 
-	u_char *p, temp[SPY_INT64_LEN + 1];
 	uint32_t ui32;
-
-	p = temp + SPY_INT64_LEN;
+	static u_char hexstr[] = "0123456789abcdef";
+	static u_char HEXstr[] = "0123456789ABCDEF";
 
 	if (hex == 0) {
 		if (ui64 <= SPY_MAX_UINT32_VALUE) {
 			ui32 = (uint32_t) ui64;
 			do {
-				*--p = (u_char) (ui32 % 10 + '0');
+				*--pnum = (u_char) (ui32 % 10 + '0');
 			} while (ui32 /= 10);
 		} else {
 			do {
-				*--p = (u_char) (ui64 % 10 + '0');
+				*--pnum = (u_char) (ui64 % 10 + '0');
 			} while (ui64 /= 10);
 		}
 	} else if (hex == 1) {
-	} else if (hex == 2) {
+		do {
+			*--pnum = hexstr[(uint32_t)(ui64 & 0xf)];
 
+		} while (ui64 >>= 4);
+	} else if (hex == 2) {
+		do {
+			*--pnum = HEXstr[(uint32_t)(ui64 & 0xf)];
+
+		} while (ui64 >>= 4);
 	}
 
+	return pnum;
 	//len = (size_t) spy_min((last - buf), (temp + SPY_INT64_LEN) - p);
-	buf = spy_printf_pad(buf, last, width, (temp + SPY_INT64_LEN) - p, zero, p,
-			align);
-
-	return buf;
 }
 
 #ifdef _SPY_STRING_UNIT_TEST_
@@ -281,7 +312,7 @@ int main() {
 	u_char *p, *last;
 	last = buf + 10;
 	p = buf;
-	p = spy_slprintf(p, last, "%+10d\n", 123);
+	p = spy_slprintf(p, last, "%-lf\n", 12123123123.5123123);
 	write(1, buf, p - buf);
 	//write(1, c, 1);
 	// 1 11111000 000000000000000000000
