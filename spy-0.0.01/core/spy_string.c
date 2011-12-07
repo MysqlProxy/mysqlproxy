@@ -13,6 +13,18 @@ spy_slprintf(u_char *buf, u_char *last, const char *fmt, ...) {
 	return p;
 }
 
+u_char * spy_cdecl
+spy_sprintf(u_char *buf, const char *fmt, ...) {
+	u_char *p;
+	va_list args;
+
+	va_start(args, fmt);
+	p = spy_vslprintf(buf, (void *) -1, fmt, args);
+	va_end(args);
+
+	return p;
+}
+
 u_char *
 spy_vslprintf(u_char *buf, u_char *last, const char *fmt, va_list args) {
 
@@ -20,6 +32,7 @@ spy_vslprintf(u_char *buf, u_char *last, const char *fmt, va_list args) {
 	u_char *p, tempn[SPY_INT64_LEN + 1], tempf[SPY_DOUBLE_FRAC_LEN + 1],
 			tempr[SPY_INT64_LEN + SPY_DOUBLE_FRAC_LEN + 2], *pr;
 	int c, i; // char 临时字符
+	spy_str_t s;
 	u_char zero; // 填充字符
 	int64_t i64;
 	uint64_t ui64;
@@ -65,6 +78,8 @@ spy_vslprintf(u_char *buf, u_char *last, const char *fmt, va_list args) {
 					continue;
 				case '0':
 					zero = '0';
+					fmt++;
+					continue;
 				default:
 					break;
 				}
@@ -122,6 +137,15 @@ spy_vslprintf(u_char *buf, u_char *last, const char *fmt, va_list args) {
 				}
 
 				buf = spy_printf_pad(buf, last, width, len, zero, p - len,
+						align);
+				fmt++;
+
+				continue;
+
+			case 'S':
+				s = va_arg(args, spy_str_t);
+
+				buf = spy_printf_pad(buf, last, width, s.len, zero, s.data,
 						align);
 				fmt++;
 
@@ -235,11 +259,12 @@ spy_printf_pad(u_char *buf, u_char *last, spy_uint_t width, size_t len,
 		u_char zero, u_char *p, spy_uint_t align) {
 
 	int i;
-	u_char *t;
+	u_char *t, *res;
 	width = spy_ldiff(width, len);
 
 	len = spy_min(len,(size_t) (last - buf));
 	t = buf;
+	res = buf + len + width;
 	if (align == 0) {
 		if (width > 0) {
 			buf = buf + len;
@@ -256,7 +281,7 @@ spy_printf_pad(u_char *buf, u_char *last, spy_uint_t width, size_t len,
 
 	spy_memcpy(t, p, len);
 
-	return t + len + width;
+	return res;
 }
 
 u_char *

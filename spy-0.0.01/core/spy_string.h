@@ -4,18 +4,16 @@
 #include <spy_core.h>
 #include <spy_config.h>
 
-
-
 typedef struct {
 	size_t len; // 字符串长度
 	u_char *data; // 字符串
 } spy_str_t;
 
-
+#define spy_string(str)     { sizeof(str) - 1, (u_char *) str }
+#define spy_null_string     { 0, NULL }
 
 #define spy_memcpy(dst, src, n)   (void) memcpy(dst, src, n)
 #define spy_cpymem(dst, src, n)   (((u_char *) memcpy(dst, src, n)) + (n))
-
 
 #define spy_strlen(s)       strlen((const char *) s)
 
@@ -31,14 +29,17 @@ u_char *
 spy_vslprintf(u_char *buf, u_char *last, const char *fmt, va_list args);
 
 u_char *
-spy_sprintf_num(uint64_t ui64, u_char zero,
-		spy_uint_t align, spy_uint_t hex, spy_uint_t width, u_char *pnum);
+spy_sprintf_num(uint64_t ui64, u_char zero, spy_uint_t align, spy_uint_t hex,
+		spy_uint_t width, u_char *pnum);
 
 u_char *
 spy_printf_pad(u_char *buf, u_char *last, spy_uint_t width, size_t len,
 		u_char zero, u_char *p, spy_uint_t align);
 
+u_char * spy_cdecl
+spy_sprintf(u_char *buf, const char *fmt, ...);
 
-
+u_char * spy_cdecl
+spy_slprintf(u_char *buf, u_char *last, const char *fmt, ...);
 #endif
 

@@ -26,7 +26,7 @@ spy_uint_t spy_strerror_init(void) {
 	 * malloc() is used and possible errors are logged using strerror().
 	 */
 
-	len = SPY_ERR_COUNT * sizeof(spy_str_t);
+	len = SPY_SYS_NERR * sizeof(spy_str_t);
 
 	spy_sys_errlist = malloc(len);
 	if (spy_sys_errlist == NULL) {

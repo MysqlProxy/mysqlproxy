@@ -4,23 +4,20 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
-../os/unix/spy_errno.c \
-../os/unix/spy_time.c 
+../lua/spy_lua.c 
 
 OBJS += \
-./os/unix/spy_errno.o \
-./os/unix/spy_time.o 
+./lua/spy_lua.o 
 
 C_DEPS += \
-./os/unix/spy_errno.d \
-./os/unix/spy_time.d 
+./lua/spy_lua.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes
-os/unix/%.o: ../os/unix/%.c
+lua/%.o: ../lua/%.c
 	@echo 'Building file: $<'
 	@echo 'Invoking: GCC C Compiler'
-	gcc -D_SPY_LUA_UNIT_TEST_ -U_SPY_MATH_UNIT_TEST_ -U_SPY_TIMES_UNIT_TEST -U_SPY_STRING_UNIT_TEST_ -I"/home/terry/github/spy-0.0.01/core" -I/usr/include/lua5.1 -I"/home/terry/github/spy-0.0.01/os/unix" -O0 -g3 -Wall -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o"$@" "$<"
+	gcc -D_SPY_TIMES_UNIT_TEST -U_SPY_MATH_UNIT_TEST_ -U_SPY_STRING_UNIT_TEST_ -I"/home/terry/github/spy-0.0.01/core" -I"/home/terry/github/spy-0.0.01/os/unix" -O0 -g3 -Wall -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o"$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 

@@ -3,9 +3,8 @@
 
 #define SPY_OK					0
 #define SPY_ERROR   			-1
-typedef struct spy_log_s 		spy_log_t;
-typedef struct spy_log_file_s 	spy_log_file_t;
-
+typedef struct spy_log_s spy_log_t;
+typedef struct spy_log_file_s spy_log_file_t;
 
 #define LF     (u_char) 10
 #define CR     (u_char) 13
@@ -15,7 +14,6 @@ typedef struct spy_log_file_s 	spy_log_file_t;
 #define spy_min(val1, val2)  ((val1 > val2) ? (val2) : (val1))
 #define spy_ldiff(val1, val2) ((val1 >= val2) ? (val1 - val2) : 0)
 
-
 #include <spy_errno.h>
 #include <spy_atomic.h>
 #include <spy_string.h>
@@ -23,7 +21,8 @@ typedef struct spy_log_file_s 	spy_log_file_t;
 #include <spy_files.h>
 #include <spy_file.h>
 #include <spy_log.h>
-
-
+#include <spy_time.h>
+#include <spy_times.h>
+#include <spy_lua.h>
 
 #endif

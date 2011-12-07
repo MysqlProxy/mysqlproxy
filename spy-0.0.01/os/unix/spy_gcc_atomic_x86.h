@@ -35,3 +35,7 @@ spy_atomic_cmp_set(spy_atomic_t *lock, spy_atomic_uint_t old,
 
 	return res;
 }
+
+
+
+#define spy_memory_barrier()    __asm__ volatile ("" ::: "memory")

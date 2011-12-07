@@ -1,5 +1,4 @@
-core/spy_string.d: ../core/spy_string.c \
- /home/terry/github/spy-0.0.01/core/spy_core.h \
+core/spy.d: ../core/spy.c /home/terry/github/spy-0.0.01/core/spy_core.h \
  /home/terry/github/spy-0.0.01/os/unix/spy_errno.h \
  /home/terry/github/spy-0.0.01/core/spy_config.h \
  /home/terry/github/spy-0.0.01/os/unix/spy_linux_config.h \

@@ -1,8 +1,8 @@
-core/spy_string.d: ../core/spy_string.c \
- /home/terry/github/spy-0.0.01/core/spy_core.h \
- /home/terry/github/spy-0.0.01/os/unix/spy_errno.h \
+core/spy_times.d: ../core/spy_times.c \
  /home/terry/github/spy-0.0.01/core/spy_config.h \
  /home/terry/github/spy-0.0.01/os/unix/spy_linux_config.h \
+ /home/terry/github/spy-0.0.01/core/spy_core.h \
+ /home/terry/github/spy-0.0.01/os/unix/spy_errno.h \
  /home/terry/github/spy-0.0.01/os/unix/spy_atomic.h \
  /home/terry/github/spy-0.0.01/os/unix/spy_gcc_atomic_x86.h \
  /home/terry/github/spy-0.0.01/core/spy_string.h \
@@ -16,13 +16,13 @@ core/spy_string.d: ../core/spy_string.c \
  /usr/include/lua5.1/luaconf.h /usr/include/lua5.1/lauxlib.h \
  /usr/include/lua5.1/lua.h /usr/include/lua5.1/lualib.h
 
-/home/terry/github/spy-0.0.01/core/spy_core.h:
-
-/home/terry/github/spy-0.0.01/os/unix/spy_errno.h:
-
 /home/terry/github/spy-0.0.01/core/spy_config.h:
 
 /home/terry/github/spy-0.0.01/os/unix/spy_linux_config.h:
+
+/home/terry/github/spy-0.0.01/core/spy_core.h:
+
+/home/terry/github/spy-0.0.01/os/unix/spy_errno.h:
 
 /home/terry/github/spy-0.0.01/os/unix/spy_atomic.h:
 
