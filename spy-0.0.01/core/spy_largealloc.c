@@ -155,6 +155,8 @@ void * spy_largeAlloc(spy_bac_t  * BCHandler , ssize_t Asize)
 	return (void*)(pSC->next->RetAddr);
 }
 
+
+#if 0
 int main()
 {
 	spy_bac_t *lbc = spy_largecreatpool();
@@ -163,6 +165,7 @@ int main()
 	printf("%x\n",lbc);
 	return 0;
 }
+#endif
 
 
 

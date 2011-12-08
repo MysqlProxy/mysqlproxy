@@ -21,6 +21,29 @@ void spy_time_init(void) {
 	spy_cached_time = &cached_time[0];
 
 	spy_time_update_r();
+
+	struct sigaction sa;
+	struct itimerval itv;
+
+	ngx_memzero(&sa, sizeof(struct sigaction));
+	sa.sa_handler = ngx_timer_signal_handler;
+	sigemptyset(&sa.sa_mask);
+
+	if (sigaction(SIGALRM, &sa, NULL) == -1) {
+		ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
+				"sigaction(SIGALRM) failed");
+		return NGX_ERROR;
+	}
+
+	itv.it_interval.tv_sec = ngx_timer_resolution / 1000;
+	itv.it_interval.tv_usec = (ngx_timer_resolution % 1000) * 1000;
+	itv.it_value.tv_sec = ngx_timer_resolution / 1000;
+	itv.it_value.tv_usec = (ngx_timer_resolution % 1000) * 1000;
+
+	if (setitimer(ITIMER_REAL, &itv, NULL) == -1) {
+		ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
+				"setitimer() failed");
+	}
 }
 
 void spy_time_update_r(void) {
@@ -56,9 +79,9 @@ void spy_time_update_r(void) {
 	p1 = &cached_err_log_time[slot][0];
 
 	// 2011-12-07 12:00:00
-	(void) spy_sprintf(p1, "%4d-%-02d-%-02d %-02d:%-02d:%-02d",
-			tm.spy_tm_year, tm.spy_tm_mon, tm.spy_tm_mday, tm.spy_tm_hour,
-			tm.spy_tm_min, tm.spy_tm_sec);
+	(void) spy_sprintf(p1, "%4d-%-02d-%-02d %-02d:%-02d:%-02d", tm.spy_tm_year,
+			tm.spy_tm_mon, tm.spy_tm_mday, tm.spy_tm_hour, tm.spy_tm_min,
+			tm.spy_tm_sec);
 
 	spy_memory_barrier();
 

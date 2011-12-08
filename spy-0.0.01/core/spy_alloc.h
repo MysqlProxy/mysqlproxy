@@ -12,7 +12,7 @@ typedef struct spy_largeblock_t
 {
 	spy_address *retaddr;
 	struct spy_largeblock_t *next
-}spy_lb_t;
+} spy_lb_t;
 
 typedef struct spy_Memblock_t
 {

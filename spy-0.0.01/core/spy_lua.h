@@ -9,8 +9,11 @@
 
 typedef lua_State spy_lua_state;
 
+static void *
+spy_lua_alloc(void *ud, void *ptr, size_t osize, size_t nsize);
+
 spy_int_t
-spy_lua_loadfile(const char *filename, spy_lua_state *L);
+spy_lua_loadfile(const char *filename, spy_lua_state **L);
 
 void
 spy_lua_close(spy_lua_state *L);

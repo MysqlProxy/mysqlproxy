@@ -12,6 +12,7 @@ typedef struct {
 #define spy_string(str)     { sizeof(str) - 1, (u_char *) str }
 #define spy_null_string     { 0, NULL }
 
+#define spy_memzero(buf, n)       (void) memset(buf, 0, n)
 #define spy_memcpy(dst, src, n)   (void) memcpy(dst, src, n)
 #define spy_cpymem(dst, src, n)   (((u_char *) memcpy(dst, src, n)) + (n))
 
