@@ -10,7 +10,7 @@ static spy_str_t err_levels[] = { spy_null_string, spy_string("emerg"),
 		spy_string("warn"), spy_string("notice"), spy_string("info"),
 		spy_string("debug") };
 
-void spy_log_core(spy_uint_t level, spy_log_t *log, spy_err_t err,
+void spy_log_error_core(spy_uint_t level, spy_log_t *log, spy_err_t err,
 		const char *fmt, va_list args) {
 
 	u_char *p, *last;
@@ -48,6 +48,35 @@ void spy_log_core(spy_uint_t level, spy_log_t *log, spy_err_t err,
 	}
 
 	(void) spy_console_write(spy_stderr, errstr, p - errstr);
+}
+
+void spy_log_debug_core(spy_log_t *log, spy_err_t err, const char *fmt, ...) {
+	va_list args;
+
+	va_start(args, fmt);
+	spy_log_error_core(SPY_LOG_DEBUG, log, err, fmt, args);
+	va_end(args);
+}
+
+void spy_cdecl
+spy_log_error(spy_uint_t level, spy_log_t *log, spy_err_t err, const char *fmt,
+		...) {
+	va_list args;
+
+	if (log->log_level >= level) {
+		va_start(args, fmt);
+		spy_log_error_core(level, log, err, fmt, args);
+		va_end(args);
+	}
+}
+
+void spy_cdecl
+spy_log_debug(spy_uint_t level, spy_log_t *log, spy_err_t err, const char* fmt,
+		...) {
+
+	if ((log)->log_level & level) {
+		spy_log_debug_core(log, err, fmt);
+	}
 }
 
 void spy_cdecl
@@ -106,7 +135,7 @@ spy_log_init(u_char *filename) {
 	spy_log.file = &spy_log_file;
 
 	// 空名字直接打拼到标准错误输出
-	if (spy_strlen(filename)) {
+	if (!spy_strlen(filename)) {
 		spy_log_file.fd = spy_stderr;
 		return &spy_log;
 	}
@@ -156,15 +185,6 @@ u_char *spy_log_errno(u_char *buf, u_char *last, spy_err_t err) {
 	}
 
 	return buf;
-}
-
-void spy_cdecl
-spy_log_debug(spy_log_t *log, spy_err_t err, const char *fmt, ...) {
-	va_list args;
-
-	va_start(args, fmt);
-	spy_log_core(SPY_LOG_DEBUG, log, err, fmt, args);
-	va_end(args);
 }
 
 #ifdef _SPY_LOG_UNIT_TEST_

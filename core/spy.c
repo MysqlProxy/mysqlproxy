@@ -6,7 +6,7 @@
 int main() {
 
 	// 日志
-	//spy_log_t *log;
+	spy_log_t *log;
 
 	// 初始化错误码
 	if (spy_strerror_init() != SPY_OK) {
@@ -15,7 +15,7 @@ int main() {
 	}
 
 	// 初始化日志
-	//log = spy_log_init((u_char *) "spy.log");
+	log = spy_log_init((u_char *) "/home/terry/github/spy-0.0.01/spy.log");
 
 	// 主干测试
 	int listen_fd, client_fd, mysql_fd, pack_num;
