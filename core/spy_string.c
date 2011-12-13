@@ -144,7 +144,6 @@ spy_vslprintf(u_char *buf, u_char *last, const char *fmt, va_list args) {
 
 			case 'S':
 				s = va_arg(args, spy_str_t);
-
 				buf = spy_printf_pad(buf, last, width, s.len, zero, s.data,
 						align);
 				fmt++;

@@ -12,6 +12,8 @@
  * 自定义调试的级别，从第二个byte开始，也就是0x100，自己定义，调用log_debug函数即打印调试信息
  * 当设置定义级别后，调用debug函数，会对bit进行检查，如果bit = 1 就可以打印对应模块的调式信息
  * 主要调用 spy_log_debug,spy_log_error
+ *
+ * 在spy.c里面init log 之后，每个同学根据自己的结构体，传入这个指针，记录吧
  */
 
 #define SPY_LOG_STDERR            0

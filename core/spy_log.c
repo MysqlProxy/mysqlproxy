@@ -27,7 +27,7 @@ void spy_log_error_core(spy_uint_t level, spy_log_t *log, spy_err_t err,
 
 	p = errstr + spy_cached_err_log_time.len; // 添加時間
 
-	p = spy_slprintf(p, last, " [%S] ", &err_levels[level]); // 添加Debug Lv
+	p = spy_slprintf(p, last, " [%S] ", err_levels[level]); // 添加Debug Lv
 
 	p = spy_vslprintf(p, last, fmt, args); // 自定義字符串
 
@@ -133,6 +133,7 @@ spy_log_t *
 spy_log_init(u_char *filename) {
 
 	spy_log.file = &spy_log_file;
+	spy_log.log_level = SPY_LOG_ERR;
 
 	// 空名字直接打拼到标准错误输出
 	if (!spy_strlen(filename)) {

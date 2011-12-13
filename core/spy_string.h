@@ -17,6 +17,7 @@ typedef struct {
 #define spy_cpymem(dst, src, n)   (((u_char *) memcpy(dst, src, n)) + (n))
 
 #define spy_strlen(s)       strlen((const char *) s)
+#define spy_strcmp(s1, s2)  strcmp((const char *) s1, (const char *) s2)
 
 /*
  * In : buf 字符串缓存,last 最大的传入字符串位置,fmt 字符串解析格式,args 可以参数

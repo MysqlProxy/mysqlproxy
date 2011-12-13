@@ -3,19 +3,43 @@
 
 #ifdef _SPY_UNIT_TEST_
 
-int main() {
+#define SPY_MAX_OPTIONS_LEN 10
+
+spy_str_t spy_options[] = { spy_string("help"), spy_string("version"),
+		spy_string("config"), spy_null_string };
+
+spy_int_t spy_show_help = 0;
+
+static spy_int_t spy_get_options(int argc, char * const *argv);
+
+int main(int argc, char * const *argv) {
 
 	// 日志
 	spy_log_t *log;
 
 	// 初始化错误码
 	if (spy_strerror_init() != SPY_OK) {
-		spy_log_stderr(0, "%s\n", "Init strerror failed.");
-		return -1;
+		spy_log_stderr(0, "%s\n", "init strerror failed.");
+		return SPY_ERROR;
+	}
+
+	// 初始化选项
+	if (spy_get_options(argc, argv) != SPY_OK) {
+		spy_log_stderr(0, "%s\n", "init options failed.");
+		return SPY_ERROR;
 	}
 
 	// 初始化日志
 	log = spy_log_init((u_char *) "/home/terry/github/spy-0.0.01/spy.log");
+	if (log == NULL) {
+		spy_log_stderr(0, "%s\n", "init log failed.");
+		return SPY_ERROR;
+	}
+
+	// 初始化时间
+	spy_time_init();
+
+	//spy_log_error(SPY_LOG_EMERG, log, 0, "%s", "test");
 
 	// 主干测试
 	int listen_fd, client_fd, mysql_fd, pack_num;
@@ -33,11 +57,11 @@ int main() {
 	if (bind(listen_fd, (struct sockaddr *) &server_addr, sizeof(server_addr))
 			!= 0) {
 		spy_log_stderr(spy_errno, "%s\n", "Spy bind failed.");
-		return -1;
+		return SPY_ERROR;
 	}
 	if (listen(listen_fd, 5) != 0) {
 		spy_log_stderr(spy_errno, "%s\n", "Spy listen failed.");
-		return -1;
+		return SPY_ERROR;
 	}
 
 	for (;;) {
@@ -55,14 +79,14 @@ int main() {
 		if (connect(mysql_fd, (struct sockaddr *) &mysql_addr,
 				sizeof(mysql_addr)) != 0) {
 			spy_log_stderr(spy_errno, "%s\n", "Connect mysql failed.");
-			return -1;
+			return SPY_ERROR;
 		}
 
 		// 读取初始化握手包
 		rc = read(mysql_fd, buf, 4);
 		if (rc != 4) {
 			spy_log_stderr(spy_errno, "%s\n", "Handshake package failed.");
-			return -1;
+			return SPY_ERROR;
 		}
 		pack_len = (size_t) buf[0];
 		pack_num = (int) buf[3];
@@ -74,7 +98,7 @@ int main() {
 		rc = read(mysql_fd, buf + 4, pack_len);
 		if (rc != pack_len) {
 			spy_log_stderr(0, "%s\n", "Handshake package failed.");
-			return -1;
+			return SPY_ERROR;
 		}
 
 		// 写回给Client
@@ -85,7 +109,7 @@ int main() {
 		rc = read(client_fd, buf, 4);
 		if (rc != 4) {
 			spy_log_stderr(0, "%s\n", "Auth package failed.");
-			return -1;
+			return SPY_ERROR;
 		}
 
 		pack_len = (size_t) buf[0];
@@ -98,7 +122,7 @@ int main() {
 		rc = read(client_fd, buf + 4, pack_len);
 		if (rc != pack_len) {
 			spy_log_stderr(0, "%s\n", "Auth package failed.");
-			return -1;
+			return SPY_ERROR;
 		}
 
 		// 写回给mysql
@@ -117,6 +141,60 @@ int main() {
 		close(client_fd);
 
 	}
-	exit(EXIT_SUCCESS);
+	return 0;
 }
+
+static spy_int_t spy_get_options(int argc, char * const *argv) {
+
+	u_char *p, *buf, *last;
+	spy_int_t i, j;
+	u_char option[SPY_MAX_OPTIONS_LEN];
+	last = option + SPY_MAX_OPTIONS_LEN;
+
+	for (i = 1; i < argc; i++) {
+		p = (u_char *) argv[i];
+		buf = option;
+
+		if (*p++ != '-') {
+			spy_log_stderr(0, "invalid option: \"%s\"", argv[i]);
+			return SPY_ERROR;
+		}
+
+		if (*p++ != '-') {
+			switch (*p) {
+			case 'h':
+				spy_show_help = 1;
+
+			default:
+				spy_log_stderr(0, "invalid option: \"%s\"", argv[i]);
+				return SPY_ERROR;
+			}
+
+		} else {
+			while (buf < last && (*buf++ = *p++) != '=') {
+			}
+			*++buf = '\0';
+
+			for (j = 0; spy_options[j].len; j++) {
+				if (spy_strcmp(spy_options[j].data, option) == 0) {
+					break;
+				}
+			}
+
+			switch (j) {
+			case 0:
+				spy_show_help = 1;
+				break;
+
+			default:
+				spy_log_stderr(0, "invalid option: \"%s\"", argv[i]);
+				return SPY_ERROR;
+			}
+		}
+
+	}
+
+	return SPY_OK;
+}
+
 #endif
