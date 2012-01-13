@@ -1,8 +1,8 @@
 #ifndef _SPY_FILES_H_INCLUDED_
 #define _SPY_FILES_H_INCLUDED_
 
-#include <spy_core.h>
 #include <spy_config.h>
+#include <spy_core.h>
 
 typedef int spy_fd_t;
 

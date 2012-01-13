@@ -17,4 +17,6 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 
+#define SPY_LISTEN_BACKLOG  511
+
 #endif

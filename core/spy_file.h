@@ -4,8 +4,9 @@
 #ifndef _SPY_FILE_H_INCLUDED_
 #define _SPY_FILE_H_INCLUDED_
 
-#include <spy_core.h>
 #include <spy_config.h>
+#include <spy_core.h>
+
 
 
 struct spy_log_file_s {

@@ -4,6 +4,8 @@
 #include <spy_config.h>
 #include <spy_core.h>
 
+typedef spy_minheap_key_t spy_msec_t;
+
 typedef struct tm spy_tm_t;
 
 #define spy_tm_sec            tm_sec
@@ -24,6 +26,7 @@ typedef struct tm spy_tm_t;
 #define spy_tm_wday_t         int
 
 void spy_localtime(time_t s, spy_tm_t *tm);
-#define spy_gettimeofday(tp)  (void) gettimeofday(tp, NULL);
+#define spy_gettimeofday(tp)  (void) gettimeofday(tp, NULL)
+#define spy_msleep(ms)        (void) usleep(ms * 1000)
 
 #endif

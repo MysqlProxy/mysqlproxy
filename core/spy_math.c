@@ -1,5 +1,5 @@
-#include <spy_core.h>
 #include <spy_config.h>
+#include <spy_core.h>
 
 double spy_modf(double calc, uint64_t *intp) {
 

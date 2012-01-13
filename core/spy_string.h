@@ -42,6 +42,9 @@ u_char * spy_cdecl
 spy_sprintf(u_char *buf, const char *fmt, ...);
 
 u_char * spy_cdecl
+spy_snprintf(u_char *buf, size_t max, const char *fmt, ...);
+
+u_char * spy_cdecl
 spy_slprintf(u_char *buf, u_char *last, const char *fmt, ...);
 #endif
 

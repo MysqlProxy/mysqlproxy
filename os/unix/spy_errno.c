@@ -1,5 +1,6 @@
-#include <spy_core.h>
 #include <spy_config.h>
+#include <spy_core.h>
+
 
 static spy_str_t *spy_sys_errlist;
 static spy_str_t spy_unknown_error = spy_string("Unknown error");

@@ -25,6 +25,18 @@ spy_sprintf(u_char *buf, const char *fmt, ...) {
 	return p;
 }
 
+u_char * spy_cdecl
+spy_snprintf(u_char *buf, size_t max, const char *fmt, ...) {
+	u_char *p;
+	va_list args;
+
+	va_start(args, fmt);
+	p = spy_vslprintf(buf, buf + max, fmt, args);
+	va_end(args);
+
+	return p;
+}
+
 u_char *
 spy_vslprintf(u_char *buf, u_char *last, const char *fmt, va_list args) {
 

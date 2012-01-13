@@ -1,16 +1,17 @@
-
 #ifndef _SPY_ERRNO_H_INCLUDED_
 #define _SPY_ERRNO_H_INCLUDED_
 
-#include <spy_core.h>
 #include <spy_config.h>
+#include <spy_core.h>
+
+#define SPY_EADDRINUSE    EADDRINUSE
 
 #define spy_errno		errno
+#define spy_socket_errno           errno
 
-typedef int             spy_err_t;
+typedef int spy_err_t;
 
 #define SPY_SYS_NERR  	135
-
 
 spy_uint_t
 spy_strerror_init(void);
