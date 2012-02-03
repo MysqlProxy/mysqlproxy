@@ -23,9 +23,13 @@ struct spy_global_s {
 	spy_event_t *write_events;
 
 	spy_uint_t listening_n;
-	spy_listening_t *listening;
+	spy_listening_t **listening;
+
+	spy_int_t endian;
 };
 
 extern volatile spy_global_t *spy_global;
+
+spy_int_t spy_global_init(spy_global_t *proxy);
 
 #endif

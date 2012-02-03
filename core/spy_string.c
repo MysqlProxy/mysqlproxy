@@ -53,7 +53,7 @@ spy_vslprintf(u_char *buf, u_char *last, const char *fmt, va_list args) {
 
 	//size_t slen; // 传参进入的解码长度
 	spy_flag_t align; // 对齐方式默认 0 : 右对齐, 1 : 左对齐
-	spy_uint_t frac_width, width, hex, l_int, s_int;
+	spy_uint_t frac_width, width, hex, l_int, s_int, sign;
 	// 小数字点，长整型int，短整形int，长双精度double
 
 	while (*fmt && buf < last) {
@@ -67,10 +67,11 @@ spy_vslprintf(u_char *buf, u_char *last, const char *fmt, va_list args) {
 			frac_width = 0;
 			l_int = 0;
 			s_int = 0;
-			r_fmt = fmt;
 			len = 0;
-			zero = ' ';
 			hex = 0;
+			sign = 1;
+			r_fmt = fmt;
+			zero = ' ';
 
 			// slen = (size_t) -1;
 			fmt++;
@@ -180,6 +181,7 @@ spy_vslprintf(u_char *buf, u_char *last, const char *fmt, va_list args) {
 
 				break;
 			case 'u':
+				sign = 0;
 				if ((SPY_LONG_SIZE == 8 && l_int == 1) || l_int == 2) {
 					ui64 = (uint64_t) va_arg (args, uint64_t);
 				} else {
@@ -245,12 +247,14 @@ spy_vslprintf(u_char *buf, u_char *last, const char *fmt, va_list args) {
 				continue;
 			}
 
-			if (i64 < 0) {
-				*buf++ = '-';
-				ui64 = (uint64_t) - i64;
+			if (sign) {
+				if (i64 < 0) {
+					*buf++ = '-';
+					ui64 = (uint64_t) - i64;
 
-			} else {
-				ui64 = (uint64_t) i64;
+				} else {
+					ui64 = (uint64_t) i64;
+				}
 			}
 
 			p = tempn + SPY_INT64_LEN;

@@ -3,24 +3,24 @@
 #include <spy_event.h>
 
 spy_listening_t *
-spy_create_listening(void *sockaddr, socklen_t socklen) {
+spy_create_listening(void *sockaddr, socklen_t socklen, size_t index) {
 
 	size_t len;
 	spy_listening_t *ls;
 	struct sockaddr *sa;
 	u_char text[SPY_SOCKADDR_STRLEN];
 
-	ls = spy_global->listening;
-	sa = malloc(sizeof(socklen));
+	ls = spy_global->listening[index];
+	sa = malloc(socklen);
 	spy_memcpy(sa, sockaddr, socklen);
 	spy_memzero(ls, sizeof(spy_listening_t));
-
 	ls->sockaddr = sa;
 	ls->socklen = socklen;
 	ls->fd = (spy_socket_t) -1;
 	ls->type = SOCK_STREAM;
 	ls->backlog = SPY_LISTEN_BACKLOG;
-
+	ls->addr_text_max_len = SPY_INET_ADDRSTRLEN;
+	ls->addr_ntop = 1;
 	len = spy_sock_ntop(sa, text, SPY_SOCKADDR_STRLEN, 1);
 	ls->addr_text.len = len;
 
@@ -44,7 +44,7 @@ spy_int_t spy_open_listening_sockets(spy_global_t *proxy) {
 	spy_uint_t i, tries, failed;
 	spy_err_t err;
 	spy_socket_t s;
-	spy_listening_t *ls;
+	spy_listening_t **ls;
 	spy_log_t *log;
 
 	reuseaddr = 1;
@@ -58,35 +58,35 @@ spy_int_t spy_open_listening_sockets(spy_global_t *proxy) {
 		ls = proxy->listening;
 		for (i = 0; i < proxy->listening_n; i++) {
 
-			if (ls[i].fd != -1) {
+			if (ls[i]->fd != -1) {
 				continue;
 			}
 
-			s = spy_socket(ls[i].sockaddr->sa_family, ls[i].type, 0);
+			s = spy_socket(ls[i]->sockaddr->sa_family, ls[i]->type, 0);
 
 			if (s == -1) {
 				spy_log_error(SPY_LOG_EMERG, log, spy_socket_errno,
-						spy_socket_n " %V failed", &ls[i].addr_text);
+						spy_socket_n " %V failed", &ls[i]->addr_text);
 				return SPY_ERROR;
 			}
 
 			if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR,
 					(const void *) &reuseaddr, sizeof(int)) == -1) {
 				spy_log_error(SPY_LOG_EMERG, log, spy_socket_errno,
-						"setsockopt(SO_REUSEADDR) %V failed", &ls[i].addr_text);
+						"setsockopt(SO_REUSEADDR) %S failed", &ls[i]->addr_text);
 
 				if (spy_close_socket(s) == -1) {
 					spy_log_error(SPY_LOG_EMERG, log, spy_socket_errno,
-							spy_close_socket_n, " %V failed", &ls[i].addr_text);
+							spy_close_socket_n, " %S failed", &ls[i]->addr_text);
 				}
 
 				return SPY_ERROR;
 			}
 
-			spy_log_debug(SPY_LOG_DEBUG_CORE, log, 0, "bind() %V #%d ",
-					&ls[i].addr_text, s);
+			spy_log_debug(SPY_LOG_DEBUG_CORE, log, 0, "bind() %S #%d ",
+					&ls[i]->addr_text, s);
 
-			if (bind(s, ls[i].sockaddr, ls[i].socklen) == -1) {
+			if (bind(s, ls[i]->sockaddr, ls[i]->socklen) == -1) {
 				err = spy_socket_errno;
 
 				if (err == SPY_EADDRINUSE) {
@@ -94,11 +94,11 @@ spy_int_t spy_open_listening_sockets(spy_global_t *proxy) {
 				}
 
 				spy_log_error(SPY_LOG_EMERG, log, err, "bind() to %V failed",
-						&ls[i].addr_text);
+						&ls[i]->addr_text);
 
 				if (spy_close_socket(s) == -1) {
 					spy_log_error(SPY_LOG_EMERG, log, spy_socket_errno,
-							spy_close_socket_n, " %V failed", &ls[i].addr_text);
+							spy_close_socket_n, " %S failed", &ls[i]->addr_text);
 				}
 
 				if (err != SPY_EADDRINUSE) {
@@ -110,29 +110,27 @@ spy_int_t spy_open_listening_sockets(spy_global_t *proxy) {
 				continue;
 			}
 
-			if (listen(s, ls[i].backlog) == -1) {
+			if (listen(s, ls[i]->backlog) == -1) {
 				spy_log_error(SPY_LOG_EMERG, log, spy_socket_errno,
-						"listen() to %V, backlog %d failed", &ls[i].addr_text,
-						ls[i].backlog);
+						"listen() to %V, backlog %d failed", &ls[i]->addr_text,
+						ls[i]->backlog);
 
 				if (spy_close_socket(s) == -1) {
 					spy_log_error(SPY_LOG_EMERG, log, spy_socket_errno,
-							spy_close_socket_n, " %V failed", &ls[i].addr_text);
+							spy_close_socket_n, " %S failed", &ls[i]->addr_text);
 				}
 
 				return SPY_ERROR;
 			}
 
-			ls[i].listen = 1;
+			ls[i]->listen = 1;
 
-			ls[i].fd = s;
+			ls[i]->fd = s;
 		}
 
 		if (!failed) {
 			break;
 		}
-
-		/* TODO: delay configurable */
 
 		spy_log_error(SPY_LOG_NOTICE, log, 0, "try again to bind() after 500ms");
 

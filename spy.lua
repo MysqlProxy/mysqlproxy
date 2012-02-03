@@ -6,9 +6,7 @@ spy.core = {
     listen = {
         "127.0.0.1"
     },
-    timeout = 20,
-    max_conn = 300,
-    io_module = "select"
+    timeout = 20
 }
 
 -- spy databases
@@ -47,5 +45,6 @@ spy.login = {
         password = "test1"
     }
 } 
+
 
 

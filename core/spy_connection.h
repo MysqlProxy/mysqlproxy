@@ -11,6 +11,9 @@ struct spy_listening_s {
 	socklen_t socklen; /* size of sockaddr */
 
 	spy_str_t addr_text;
+	size_t addr_text_max_len;
+	unsigned addr_ntop :1;
+	spy_connection_handler_pt handler;
 
 	spy_connection_t *connection;
 	int type;
@@ -29,6 +32,8 @@ struct spy_connection_s {
 	spy_event_t *write;
 
 	spy_socket_t fd;
+	size_t addr_text_max_len;
+	spy_str_t addr_text;
 
 	spy_listening_t *listening;
 
@@ -57,6 +62,6 @@ spy_int_t
 spy_open_listening_sockets(spy_global_t *proxy);
 
 spy_listening_t *
-spy_create_listening(void *sockaddr, socklen_t socklen);
+spy_create_listening(void *sockaddr, socklen_t socklen, size_t index);
 
 #endif

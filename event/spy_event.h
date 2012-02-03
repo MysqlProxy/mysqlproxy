@@ -22,13 +22,14 @@ struct spy_event_s {
 	unsigned timedout :1;
 	unsigned timer_set :1;
 
-	spy_event_handler_pt handler;
-
 	spy_uint_t index;
+	unsigned available :1;
 
 	spy_log_t *log;
 
 	spy_minheap_node_t timer;
+
+	spy_event_handler_pt handler;
 
 	unsigned closed :1;
 
@@ -38,6 +39,24 @@ struct spy_event_s {
 
 };
 
-spy_int_t spy_event_init(spy_global_t *proxy);
+typedef struct {
+	spy_int_t (*add)(spy_event_t *ev, spy_int_t event);
+	spy_int_t (*del)(spy_event_t *ev, spy_int_t event);
+	spy_int_t (*init)(spy_global_t *global);
+	void (*done)(spy_global_t *global);
+	spy_int_t (*proc)(spy_global_t *global, spy_msec_t timer);
+} spy_event_actions_t;
+
+extern spy_event_actions_t spy_event_actions;
+
+#define spy_process_events   spy_event_actions.proc
+#define spy_done_events      spy_event_actions.done
+
+#define spy_add_event        spy_event_actions.add
+#define spy_del_event        spy_event_actions.del
+#define spy_init_event		 spy_event_actions.init
+
+spy_int_t spy_event_init(spy_global_t *global);
+void spy_event_accept(spy_event_t *ev);
 
 #endif

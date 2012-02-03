@@ -6,10 +6,14 @@
 
 #define SPY_INET_ADDRSTRLEN   (sizeof("255.255.255.255") - 1)
 #define SPY_SOCKADDR_STRLEN   (SPY_INET_ADDRSTRLEN + sizeof(":65535") - 1)
+#define SPY_SOCKADDRLEN       512
 
 size_t spy_inet_ntop(int family, void *addr, u_char *text, size_t len);
 
 size_t spy_sock_ntop(struct sockaddr *sa, u_char *text, size_t len,
 		spy_uint_t port);
+
+// 0:bigendian 1:littleendian
+spy_int_t spy_get_endian();
 
 #endif

@@ -9,6 +9,10 @@ static int spy_lua_atpanic(spy_lua_state *L) {
 }
 #endif
 
+#if 0
+static void spy_lua_stack_dump(spy_lua_state *L);
+#endif
+
 static void *
 spy_lua_alloc(void *ud, void *ptr, size_t osize, size_t nsize) {
 	(void) ud;
@@ -25,7 +29,7 @@ spy_int_t spy_lua_loadfile(const char *filename, spy_lua_state **L) {
 	//lua_atpanic(*L, spy_lua_atpanic);
 	luaL_openlibs(*L);
 	if (luaL_loadfile(*L, filename) || lua_pcall(*L, 0, 0, 0)) {
-		//fprintf(stderr, "%s", lua_tostring(L, -1));
+		spy_log_stdout("%s", spy_lua_tostring(*L, -1));
 		lua_pop(*L, 1);/* pop error message from the stack */
 		return SPY_ERROR;
 	}
@@ -38,7 +42,7 @@ void spy_lua_close(spy_lua_state *L) {
 
 }
 
-spy_int_t spy_lua_get_field_int(spy_lua_state *L, const char *key,
+spy_int_t spy_lua_getkey_field_int(spy_lua_state *L, const char *key,
 		spy_int_t *val) {
 	// param : timeout, index : -1 ,spy table index : -2
 	spy_lua_pushstring(L, key);
@@ -58,7 +62,7 @@ spy_int_t spy_lua_get_field_int(spy_lua_state *L, const char *key,
 	return SPY_OK;
 }
 
-spy_int_t spy_lua_get_field_uint(spy_lua_state *L, const char *key,
+spy_int_t spy_lua_getkey_field_uint(spy_lua_state *L, const char *key,
 		spy_uint_t *val) {
 	// param : timeout, index : -1 ,spy table index : -2
 	spy_lua_pushstring(L, key);
@@ -77,6 +81,57 @@ spy_int_t spy_lua_get_field_uint(spy_lua_state *L, const char *key,
 
 	return SPY_OK;
 }
+
+spy_int_t spy_lua_getindex_field_str(spy_lua_state *L, spy_int_t index,
+		u_char *val) {
+
+	size_t l;
+	// param : timeout, index : -1 ,spy table index : -2
+	spy_lua_pushnumber(L, index);
+
+	//get spy.xxx.timeout spy.core.listen
+	spy_lua_gettable(L, -2);
+
+	if (!spy_lua_isstring(L, -1)) {
+		return SPY_ERROR;
+	}
+
+	l = spy_lua_objlen(L, -1);
+
+	spy_memcpy(val, spy_lua_tostring(L, -1), l);
+
+	// remove string
+	spy_lua_pop(L, 1);
+
+	return SPY_OK;
+}
+
+#if 0
+static void spy_lua_stack_dump(spy_lua_state *L) {
+	spy_int_t i;
+	int top = spy_lua_gettop(L);
+
+	spy_log_stdout("lua stack dump.");
+	for (i = 1; i <= top; i++) { /* repeat for each level */
+		int t = spy_lua_type(L, i);
+		switch (t) {
+			case LUA_TSTRING: /* strings */
+			spy_log_stdout("`%s'", spy_lua_tostring(L, i));
+			break;
+			case LUA_TBOOLEAN: /* booleans */
+			spy_log_stdout(spy_lua_toboolean(L, i) ? "true" : "false");
+			break;
+			case LUA_TNUMBER: /* numbers */
+			spy_log_stdout("%d", (spy_int_t) spy_lua_tonumber(L, i));
+			break;
+			default: /* other values */
+			spy_log_stdout("%s", spy_lua_typename(L, t));
+			break;
+		}
+	}
+	spy_log_stdout("lua stack dump end.");
+}
+#endif
 
 #ifdef _SPY_LUA_UNIT_TEST_
 
@@ -115,6 +170,30 @@ int main() {
 	int timeout = (int) spy_lua_tonumber(L, -1);
 
 	spy_log_stdout("%d", timeout);
+
+	// pop timeout
+	spy_lua_pop(L, 1);
+
+	// get listen table
+	spy_lua_getfield(L, -1, "listen");
+
+	if (!spy_lua_istable(L, -1)) {
+		return SPY_ERROR;
+	}
+
+	spy_int_t l, i;
+	l = spy_lua_objlen(L, -1);
+	spy_log_stdout("l : %d", l);
+
+	u_char(*listen)[SPY_INET_ADDRSTRLEN] =
+	(u_char(*)[SPY_INET_ADDRSTRLEN]) malloc(l * SPY_INET_ADDRSTRLEN);
+
+	for (i = 1; i <= l; i++) {
+		spy_memzero(listen[i-1], SPY_INET_ADDRSTRLEN);
+		spy_lua_getindex_field_str(L, i, listen[i - 1], SPY_INET_ADDRSTRLEN);
+
+		spy_log_stdout("%s", listen[i - 1]);
+	}
 
 	spy_lua_close(L);
 

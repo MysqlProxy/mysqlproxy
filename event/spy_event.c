@@ -1,13 +1,24 @@
 #include <spy_config.h>
 #include <spy_core.h>
 #include <spy_event.h>
+#include <spy_event_select.c>
 
-spy_int_t spy_event_init(spy_global_t *proxy) {
+spy_event_actions_t spy_event_actions;
+
+spy_int_t spy_event_init(spy_global_t *global) {
 
 	spy_uint_t i;
 	spy_event_t *rev, *wev;
 	spy_connection_t *c, *next;
-	spy_listening_t *ls;
+	spy_listening_t **ls;
+
+	// IO复用模块初始化
+	spy_event_actions.init = spy_select_init;
+	spy_event_actions.add = spy_select_add_event;
+	spy_event_actions.del = spy_select_del_event;
+	spy_event_actions.done = spy_select_done;
+
+	spy_init_event(global);
 
 	/*
 	 // 初始化时间计数器
@@ -17,33 +28,34 @@ spy_int_t spy_event_init(spy_global_t *proxy) {
 	 */
 
 	// 初始化连接
-	proxy->connections = malloc(sizeof(spy_connection_t) * proxy->connection_n);
-	if (proxy->connections == NULL) {
+	global->connections = malloc(sizeof(spy_connection_t)
+			* global->connection_n);
+	if (global->connections == NULL) {
 		return SPY_ERROR;
 	}
 
-	c = proxy->connections;
+	c = global->connections;
 
 	// 初始化读事件
-	proxy->read_events = malloc(sizeof(spy_event_t) * proxy->connection_n);
-	if (proxy->read_events == NULL) {
+	global->read_events = malloc(sizeof(spy_event_t) * global->connection_n);
+	if (global->read_events == NULL) {
 		return SPY_ERROR;
 	}
 
 	// 初始化写事件
-	proxy->write_events = malloc(sizeof(spy_event_t) * proxy->connection_n);
-	if (proxy->write_events == NULL) {
+	global->write_events = malloc(sizeof(spy_event_t) * global->connection_n);
+	if (global->write_events == NULL) {
 		return SPY_ERROR;
 	}
 
-	rev = proxy->read_events;
-	wev = proxy->write_events;
-	for (i = 0; i < proxy->connection_n; i++) {
+	rev = global->read_events;
+	wev = global->write_events;
+	for (i = 0; i < global->connection_n; i++) {
 		rev[i].closed = 1;
 		wev[i].closed = 1;
 	}
 
-	i = proxy->connection_n;
+	i = global->connection_n;
 	next = NULL;
 
 	do {
@@ -51,8 +63,8 @@ spy_int_t spy_event_init(spy_global_t *proxy) {
 		i--;
 
 		c[i].data = next;
-		c[i].read = &proxy->read_events[i];
-		c[i].write = &proxy->write_events[i];
+		c[i].read = &global->read_events[i];
+		c[i].write = &global->write_events[i];
 		c[i].fd = (spy_socket_t) -1;
 
 		next = &c[i];
@@ -60,33 +72,31 @@ spy_int_t spy_event_init(spy_global_t *proxy) {
 	} while (i);
 
 	// 初始化可用连接
-	proxy->free_connections = next;
-	proxy->free_connection_n = proxy->connection_n;
+	global->free_connections = next;
+	global->free_connection_n = global->connection_n;
 
 	// 为监听分配连接
-	ls = proxy->listening;
+	ls = global->listening;
 
-	for (i = 0; i < proxy->listening_n; i++) {
+	for (i = 0; i < global->listening_n; i++) {
 
-		c = spy_get_connection(ls[i].fd, proxy->log);
+		c = spy_get_connection(ls[i]->fd, global->log);
 
 		if (c == NULL) {
 			return SPY_ERROR;
 		}
 
-		c->listening = &ls[i];
-		ls[i].connection = c;
+		c->listening = ls[i];
+		ls[i]->connection = c;
 
 		rev = c->read;
 		rev->accept = 1;
 
-		//rev->handler = ngx_event_accept;
+		rev->handler = spy_event_accept;
 
-		/*
-		 if (spy_add_event(rev, SPY_READ_EVENT, 0) == SPY_ERROR) {
-		 return SPY_ERROR;
-		 }
-		 */
+		if (spy_add_event(rev, SPY_READ_EVENT) == SPY_ERROR) {
+			return SPY_ERROR;
+		}
 
 	}
 

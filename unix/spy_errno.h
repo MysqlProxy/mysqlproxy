@@ -5,8 +5,6 @@
 #include <spy_core.h>
 
 #define SPY_EADDRINUSE    EADDRINUSE
-#define SPY_ECONNABORTED  ECONNABORTED
-#define SPY_EAGAIN        EAGAIN
 
 #define spy_errno		errno
 #define spy_socket_errno           errno

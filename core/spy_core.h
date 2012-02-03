@@ -12,6 +12,7 @@ typedef struct spy_global_s spy_global_t;
 typedef struct spy_conf_s spy_conf_t;
 typedef struct spy_event_s spy_event_t;
 
+typedef void (*spy_connection_handler_pt)(spy_connection_t *c);
 typedef void (*spy_event_handler_pt)(spy_event_t *ev);
 
 #define LF     (u_char) 10
@@ -29,7 +30,9 @@ typedef void (*spy_event_handler_pt)(spy_event_t *ev);
 #include <spy_files.h>
 #include <spy_file.h>
 #include <spy_log.h>
+#include <spy_alloc.h>
 #include <spy_minheap.h>
+#include <spy_rand.h>
 #include <spy_time.h>
 #include <spy_times.h>
 #include <spy_lua.h>
