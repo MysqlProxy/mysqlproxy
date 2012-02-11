@@ -153,9 +153,14 @@ static spy_int_t spy_select_process_events(spy_global_t *global,
 				max_fd);
 	}
 
-	tv.tv_sec = (long) (timer / 1000);
-	tv.tv_usec = (long) ((timer % 1000) * 1000);
-	tp = &tv;
+	if (timer == SPY_TIMER_INFINITE) {
+		tp = NULL;
+
+	} else {
+		tv.tv_sec = (long) (timer / 1000);
+		tv.tv_usec = (long) ((timer % 1000) * 1000);
+		tp = &tv;
+	}
 
 	spy_log_debug(SPY_LOG_DEBUG_EVENT, global->log, 0, "select timer: %M",
 			timer);

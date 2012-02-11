@@ -20,7 +20,7 @@ spy_msec_t spy_event_find_timer(void) {
 	node = spy_minheap_min(heap);
 
 	if (!node)
-		return 0;
+		return SPY_TIMER_INFINITE;
 
 	timer = (spy_msec_int_t) node->key - (spy_msec_int_t) spy_current_msec;
 
