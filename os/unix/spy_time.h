@@ -5,6 +5,7 @@
 #include <spy_core.h>
 
 typedef spy_minheap_key_t spy_msec_t;
+typedef spy_minheap_key_int_t spy_msec_int_t;
 
 typedef struct tm spy_tm_t;
 

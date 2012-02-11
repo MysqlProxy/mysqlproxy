@@ -7,6 +7,7 @@
 #define SPY_EADDRINUSE    EADDRINUSE
 #define SPY_ECONNABORTED  ECONNABORTED
 #define SPY_EAGAIN        EAGAIN
+#define SPY_EINTR		  EINTR
 
 #define spy_errno		errno
 #define spy_socket_errno           errno

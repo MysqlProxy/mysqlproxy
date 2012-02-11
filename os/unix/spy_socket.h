@@ -15,4 +15,7 @@ typedef int spy_socket_t;
 #define spy_close_socket    close
 #define spy_close_socket_n  "close() socket"
 
+#define spy_nonblocking(s)  fcntl(s, F_SETFL, fcntl(s, F_GETFL) | O_NONBLOCK)
+#define spy_nonblocking_n   "fcntl(O_NONBLOCK)"
+
 #endif
