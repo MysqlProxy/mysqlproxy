@@ -6,6 +6,16 @@
 #include <spy_event.h>
 #include <spy_proxy.h>
 
+typedef struct spy_proxy_request_s spy_proxy_request_t;
+
+struct spy_proxy_request_s {
+
+	spy_buf_t *init_packet;
+	spy_connection_t *connection;
+
+	unsigned handshake :1;
+};
+
 struct spy_packet_header_s {
 
 	char packet_length[3];
@@ -13,6 +23,7 @@ struct spy_packet_header_s {
 
 };
 
+#if 0
 struct spy_init_packet_s {
 	spy_packet_header_t header;
 	char protocol_version;
@@ -29,6 +40,7 @@ struct spy_init_packet_s {
 	char *plugin_data;
 	char terminator_2;
 };
+#endif
 
 void spy_proxy_init_packet(spy_connection_t *c);
 

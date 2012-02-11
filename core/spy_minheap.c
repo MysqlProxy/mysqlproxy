@@ -1,82 +1,71 @@
 #include <spy_config.h>
 #include <spy_core.h>
 
-spy_int_t spy_minheap_insert(spy_minheap_t *heap, spy_minheap_node_t node) {
+void spy_minheap_init(spy_minheap_t *heap, spy_uint_t max_num) {
+	heap->root = 0;
+	heap->last = 0;
+	heap->max_num = max_num;
+	heap->node = spy_alloc(sizeof(spy_minheap_node_t *) * 10, spy_global->log);
+}
 
-	int i;
+spy_int_t spy_minheap_insert(spy_minheap_t *heap, spy_minheap_node_t *node,
+		size_t index) {
+
+	size_t parent;
+
+	// 没满的heap
 	if (spy_minheap_full(heap)) {
 		return SPY_ERROR;
 	}
 
-	i = ++(heap->last);
+	heap->last++;
+	//child = heap->last++;
+	parent = (index - 1) / 2;
 	// 和父节点比较，直到根节点
-	while ((i != 1) && (node.key < heap->node[i / 2].key)) {
+	while (index && (node->key < heap->node[parent]->key)) {
 		// 子父交换，上移
-		heap->node[i] = heap->node[i / 2];
-		i /= 2;
+		(heap->node[index] = heap->node[parent])->index = index;
+		index = parent;
+		parent = (index - 1) / 2;
 	}
-	heap->node[i] = node;
+
+	(heap->node[index] = node)->index = index;
+
 	return SPY_OK;
 }
 
-spy_int_t spy_minheap_delete(spy_minheap_t *heap) {
+spy_int_t spy_minheap_delete(spy_minheap_t *heap, size_t index) {
 
-	spy_uint_t parent, child;
-	spy_minheap_node_t temp;
+	spy_uint_t child;
+
+	// 非空的heap
 	if (spy_minheap_empty(heap)) {
 		return SPY_ERROR;
 	}
 
-	temp = heap->node[heap->last--]; // 取最后一个节点
-	parent = 1;
-	child = 2;
-
+	heap->last--;
+	// 左节点
+	child = 2 * index + 1;
 	// 非最后一个节点
-	while (child <= heap->last) {
+	while (child < heap->last) {
 		// 左节点，还是右节点
-		if (child < heap->last && heap->node[child].key
-				> heap->node[child + 1].key)
+		if (child < heap->last - 1 && heap->node[child]->key > heap->node[child
+				+ 1]->key)
 			child++;
-
-		// 最末节点比child小或者等于直接跳出，比如只有一个节点的情况
-		if (temp.key <= heap->node[child].key)
+		// 最末节点比child小或者等于直接跳出
+		if (heap->node[heap->last]->key <= heap->node[child]->key)
 			break;
-
 		// 父子交换，下移
-		heap->node[parent] = heap->node[child];
-		parent = child;
-		child *= 2;
+		(heap->node[index] = heap->node[child])->index = index;
+		// 左节点
+		index = child;
+		child = index * 2 + 1;
 	}
 
-	heap->node[parent] = temp;
-	return SPY_OK;
-}
-
-spy_int_t spy_minheap_replace(spy_minheap_t *heap, size_t index, spy_uint_t new) {
-
-	size_t i;
-
-	if (index >= heap->max_num - 1) {
-		return SPY_ERROR;
-	}
-
-	i = index;
-
-	while ((i != 1) && (new < heap->node[i / 2].key)) {
-		heap->node[i] = heap->node[i / 2];
-		i /= 2;
-	}
-
-	while ((i <= heap->last) && (new > heap->node[i * 2].key)) {
-		heap->node[i] = heap->node[i * 2];
-		i *= 2;
-	}
-
-	heap->node[i].key = new;
+	(heap->node[index] = heap->node[heap->last])->index = index;
 
 	return SPY_OK;
 }
-
 
 #ifdef _SPY_MINHEAP_UNIT_TEST_
 
@@ -85,14 +74,10 @@ int main() {
 	int i;
 	spy_minheap_t heap;
 
-	heap.root = 1;
-	heap.last = 1;
-	heap.max_num = 10;
-	heap.node = malloc(sizeof(spy_minheap_node_t) * 10);
-
-	for (i = 0; i < heap.max_num; i++) {
-		heap.node[i].key = 0;
-	}
+	heap.root = 0;
+	heap.last = 0;
+	heap.max_num = 5;
+	heap.node = malloc(sizeof(spy_minheap_node_t *) * 5);
 
 	spy_minheap_node_t root_node;
 	root_node.key = 20;
@@ -112,24 +97,29 @@ int main() {
 	spy_minheap_node_t sixth_node;
 	sixth_node.key = 21;
 
-	spy_minheap_insert(&heap, root_node);
-	spy_minheap_insert(&heap, second_node);
-	spy_minheap_insert(&heap, thrid_node);
-	spy_minheap_insert(&heap, fourth_node);
-	spy_minheap_insert(&heap, fifth_node);
-	spy_minheap_insert(&heap, sixth_node);
+	spy_minheap_insert(&heap, &root_node, heap.last);
+	spy_minheap_insert(&heap, &second_node, heap.last);
+	spy_minheap_insert(&heap, &thrid_node, heap.last);
+	spy_minheap_insert(&heap, &fourth_node, heap.last);
+	spy_minheap_insert(&heap, &fifth_node, heap.last);
+	spy_minheap_insert(&heap, &sixth_node, heap.last);
 
 	//spy_minheap_delete(&heap);
 
-	for (i = 0; i < heap.max_num; i++) {
-		spy_log_stdout("%2d", heap.node[i].key);
+	for (i = heap.root; i < heap.last; i++) {
+		spy_log_stdout("index : %d, key : %d", heap.node[i]->index,
+				heap.node[i]->key);
 	}
 
+	spy_log_stdout("last : %d", heap.last);
 	spy_log_stdout("--------------");
-	spy_minheap_replace(&heap, 3, 23);
+	//spy_minheap_replace(&heap, 3, 23);
 
-	for (i = 0; i < heap.max_num; i++) {
-		spy_log_stdout("%2d", heap.node[i].key);
+	spy_minheap_delete(&heap, 3);
+
+	for (i = heap.root; i < heap.last; i++) {
+		spy_log_stdout("index : %d, key : %d", heap.node[i]->index,
+				heap.node[i]->key);
 	}
 
 	spy_log_stdout("last : %d", heap.last);

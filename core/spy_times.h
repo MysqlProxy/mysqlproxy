@@ -1,4 +1,3 @@
-
 #ifndef _SPY_TIMES_H_INCLUDED_
 #define _SPY_TIMES_H_INCLUDED_
 
@@ -20,5 +19,7 @@ typedef struct {
 
 void spy_time_update_r(void);
 void spy_time_init(void);
+
+extern volatile spy_msec_t spy_current_msec;
 
 #endif

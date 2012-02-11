@@ -31,6 +31,7 @@
 #define SPY_LOG_DEBUG_CORE		  0x200
 #define SPY_LOG_DEBUG_ALLOC		  0x400
 #define SPY_LOG_DEBUG_EVENT		  0x800
+#define SPY_LOG_DEBUG_PROXY		  0xF00
 
 // 日志记录的最大字符串长度
 #define SPY_MAX_ERROR_STR	2048

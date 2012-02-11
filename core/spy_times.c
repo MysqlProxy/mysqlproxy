@@ -8,6 +8,7 @@ static spy_uint_t slot;
 static u_char
 		cached_err_log_time[SPY_TIME_SLOTS][sizeof("1970-09-28 12:00:00")];
 
+volatile spy_msec_t spy_current_msec;
 static spy_time_t cached_time[SPY_TIME_SLOTS];
 volatile spy_str_t spy_cached_err_log_time;
 static spy_atomic_t spy_time_lock;
@@ -27,6 +28,7 @@ void spy_time_update_r(void) {
 	u_char *p1;
 	spy_tm_t tm;
 	time_t sec;
+	spy_uint_t msec;
 	spy_time_t *tp;
 	struct timeval tv;
 
@@ -37,10 +39,16 @@ void spy_time_update_r(void) {
 	spy_gettimeofday(&tv);
 
 	sec = tv.tv_sec;
+	msec = tv.tv_usec / 1000;
 
+	spy_current_msec = (spy_msec_t) sec * 1000 + msec;
 	tp = &cached_time[slot];
 
+	tp->sec = sec;
+	tp->msec = msec;
+
 	if (tp->sec == sec) {
+		tp->msec = msec;
 		spy_unlock(&spy_time_lock);
 		return;
 	}

@@ -1,7 +1,6 @@
 #include <spy_config.h>
 #include <spy_core.h>
-#include <spy_event.h>
-#include <spy_proxy.h>
+#include <spy_process_launcher.h>
 
 #define SPY_MAX_OPTIONS_LEN 10
 
@@ -10,7 +9,7 @@ static spy_int_t spy_show_version = 0;
 static char *spy_conf_path;
 
 static spy_int_t spy_get_options(int argc, char * const *argv);
-
+#if 1
 int main(int argc, char * const *argv) {
 
 	// 日志
@@ -50,7 +49,8 @@ int main(int argc, char * const *argv) {
 	// 全局初始化
 	spy_global_init(global);
 
-	spy_msleep(100000);
+	// 启动
+	spy_single_process_launch(global);
 
 	return SPY_OK;
 }
@@ -107,4 +107,4 @@ static spy_int_t spy_get_options(int argc, char * const *argv) {
 
 	return SPY_OK;
 }
-
+#endif

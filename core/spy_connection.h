@@ -32,12 +32,15 @@ struct spy_connection_s {
 	spy_event_t *write;
 
 	spy_socket_t fd;
+	spy_recv_pt recv;
+	spy_send_pt send;
+
 	size_t addr_text_max_len;
 	spy_str_t addr_text;
 
-	spy_listening_t *listening;
-
 	off_t sent;
+
+	spy_listening_t *listening;
 
 	spy_log_t *log;
 
@@ -45,6 +48,10 @@ struct spy_connection_s {
 	socklen_t socklen;
 
 	struct sockaddr *local_sockaddr;
+
+	unsigned sndlowat :1;
+	unsigned error :1;
+	unsigned log_error :3; /* ngx_connection_log_error_e */
 };
 
 /*
@@ -63,5 +70,10 @@ spy_open_listening_sockets(spy_global_t *proxy);
 
 spy_listening_t *
 spy_create_listening(void *sockaddr, socklen_t socklen, size_t index);
+
+spy_int_t
+spy_connection_error(spy_connection_t *c, spy_err_t err, char *text);
+
+void spy_close_connection(spy_connection_t *c);
 
 #endif

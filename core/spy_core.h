@@ -3,6 +3,7 @@
 
 #define SPY_OK					0
 #define SPY_ERROR   			-1
+#define SPY_AGAIN      			-2
 
 typedef struct spy_log_s spy_log_t;
 typedef struct spy_log_file_s spy_log_file_t;
@@ -26,7 +27,9 @@ typedef void (*spy_event_handler_pt)(spy_event_t *ev);
 #include <spy_errno.h>
 #include <spy_atomic.h>
 #include <spy_string.h>
+#include <spy_queue.h>
 #include <spy_math.h>
+#include <spy_buf.h>
 #include <spy_files.h>
 #include <spy_file.h>
 #include <spy_log.h>
@@ -41,6 +44,7 @@ typedef void (*spy_event_handler_pt)(spy_event_t *ev);
 #include <spy_rand.h>
 #include <spy_socket.h>
 #include <spy_global.h>
+#include <spy_os.h>
 #include <spy_connection.h>
 
 #endif

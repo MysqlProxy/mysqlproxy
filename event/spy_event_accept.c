@@ -88,6 +88,8 @@ void spy_event_accept(spy_event_t *ev) {
 		 c->pool->log = log;
 		 */
 
+		c->recv = spy_recv;
+		c->send = spy_send;
 		c->socklen = socklen;
 		c->listening = ls;
 		//c->local_sockaddr = ls->sockaddr;

@@ -2,6 +2,8 @@
 #include <spy_core.h>
 #include <spy_event.h>
 
+spy_os_io_t spy_io;
+
 spy_listening_t *
 spy_create_listening(void *sockaddr, socklen_t socklen, size_t index) {
 
@@ -62,6 +64,7 @@ spy_int_t spy_open_listening_sockets(spy_global_t *proxy) {
 				continue;
 			}
 
+			// 建立套接字
 			s = spy_socket(ls[i]->sockaddr->sa_family, ls[i]->type, 0);
 
 			if (s == -1) {
@@ -70,6 +73,7 @@ spy_int_t spy_open_listening_sockets(spy_global_t *proxy) {
 				return SPY_ERROR;
 			}
 
+			// 重用端口
 			if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR,
 					(const void *) &reuseaddr, sizeof(int)) == -1) {
 				spy_log_error(SPY_LOG_EMERG, log, spy_socket_errno,
@@ -83,9 +87,23 @@ spy_int_t spy_open_listening_sockets(spy_global_t *proxy) {
 				return SPY_ERROR;
 			}
 
+			// 设置套接字非阻塞
+			if (spy_nonblocking(s) == -1) {
+				spy_log_error(SPY_LOG_EMERG, log, spy_socket_errno,
+						spy_nonblocking_n " %S failed", ls[i]->addr_text);
+
+				if (spy_close_socket(s) == -1) {
+					spy_log_error(SPY_LOG_EMERG, log, spy_socket_errno,
+							spy_close_socket_n " %S failed", ls[i]->addr_text);
+				}
+
+				return SPY_ERROR;
+			}
+
 			spy_log_debug(SPY_LOG_DEBUG_CORE, log, 0, "bind() %S #%d ",
 					&ls[i]->addr_text, s);
 
+			// 绑定
 			if (bind(s, ls[i]->sockaddr, ls[i]->socklen) == -1) {
 				err = spy_socket_errno;
 
@@ -110,6 +128,7 @@ spy_int_t spy_open_listening_sockets(spy_global_t *proxy) {
 				continue;
 			}
 
+			// 监听
 			if (listen(s, ls[i]->backlog) == -1) {
 				spy_log_error(SPY_LOG_EMERG, log, spy_socket_errno,
 						"listen() to %V, backlog %d failed", &ls[i]->addr_text,
@@ -208,3 +227,93 @@ spy_get_connection(spy_socket_t s, spy_log_t *log) {
 	return c;
 }
 
+void spy_close_connection(spy_connection_t *c) {
+	spy_err_t err;
+	spy_socket_t fd;
+
+	if (c->fd == -1) {
+		spy_log_error(SPY_LOG_ALERT, c->log, 0, "connection already closed");
+		return;
+	}
+
+	/*
+	 if (c->read->timer_set) {
+	 spy_del_timer(c->read);
+	 }
+
+	 if (c->write->timer_set) {
+	 spy_del_timer(c->write);
+	 }
+	 */
+
+	if (c->read->active) {
+		spy_del_event(c->read, SPY_READ_EVENT);
+	}
+
+	if (c->write->active) {
+		spy_del_event(c->write, SPY_WRITE_EVENT);
+	}
+
+	/*
+	 if (c->read->prev) {
+	 spy_delete_posted_event(c->read);
+	 }
+
+	 if (c->write->prev) {
+	 ngx_delete_posted_event(c->write);
+	 }
+	 */
+
+	c->read->closed = 1;
+	c->write->closed = 1;
+
+	spy_free_connection(c);
+
+	fd = c->fd;
+	c->fd = (spy_socket_t) -1;
+
+	if (spy_close_socket(fd) == -1) {
+
+		err = spy_socket_errno;
+
+		/* we use ngx_cycle->log because c->log was in c->pool */
+
+		spy_log_error(SPY_LOG_ERR, spy_global->log, err,
+				spy_close_socket_n " %d failed", fd);
+	}
+}
+
+spy_int_t spy_connection_error(spy_connection_t *c, spy_err_t err, char *text) {
+
+#if 0
+	spy_uint_t level;
+	/* Winsock may return NGX_ECONNABORTED instead of NGX_ECONNRESET */
+
+	if ((err == NGX_ECONNRESET) && c->log_error == SPY_ERROR_IGNORE_ECONNRESET) {
+		return 0;
+	}
+
+	if (err == 0 || err == SPY_ECONNRESET || err == SPY_EPIPE || err
+			== SPY_ENOTCONN || err == SPY_ETIMEDOUT || err == SPY_ECONNREFUSED
+			|| err == SPY_ENETDOWN || err == SPY_ENETUNREACH || err
+			== SPY_EHOSTDOWN || err == SPY_EHOSTUNREACH) {
+		switch (c->log_error) {
+
+			case SPY_ERROR_IGNORE_EINVAL:
+			case SPY_ERROR_IGNORE_ECONNRESET:
+			case SPY_ERROR_INFO:
+			level = SPY_LOG_INFO;
+			break;
+
+			default:
+			level = SPY_LOG_ERR;
+		}
+
+	} else {
+		level = SPY_LOG_ALERT;
+	}
+
+	ngx_log_error(level, c->log, err, text);
+#endif
+	return SPY_ERROR;
+}
