@@ -41,6 +41,6 @@ struct spy_buf_s {
 };
 
 spy_buf_t *
-spy_create_temp_buf(size_t size);
+spy_create_temp_buf(spy_pool_t *pool, size_t size);
 
 #endif

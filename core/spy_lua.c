@@ -82,6 +82,24 @@ spy_int_t spy_lua_getkey_field_uint(spy_lua_state *L, const char *key,
 	return SPY_OK;
 }
 
+spy_int_t spy_lua_getkey_field_str(spy_lua_state *L, const char *key,
+		u_char *val) {
+
+	spy_lua_pushstring(L, key);
+
+	spy_lua_gettable(L, -2);
+
+	if (!spy_lua_istring(L, -1)) {
+		return SPY_ERROR;
+	}
+
+	val = (u_char *) spy_lua_tostring(L, -1);
+
+	spy_lua_pop(L, 1);
+
+	return SPY_OK;
+}
+
 spy_int_t spy_lua_getindex_field_str(spy_lua_state *L, spy_int_t index,
 		u_char *val) {
 

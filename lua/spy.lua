@@ -2,13 +2,11 @@
 spy = {}
 
 spy.core = {
-    port = 1919,
-    listen = {
-        "127.0.0.1"
-    },
-    timeout = 20,
-    max_conn = 300,
-    io_module = "select"
+    listen_addr = "127.0.0.1:1919|0.0.0.0:1919" -- spy listen addr
+    worker_connections = 300, -- max connection for each work process
+    error_log = "logs/error.log", -- error log path
+    error_level = "notice", -- error log level
+    debug_level = "core|event" -- error debug level , "|" is a sep for multi level
 }
 
 -- spy databases

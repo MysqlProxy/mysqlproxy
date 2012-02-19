@@ -7,6 +7,7 @@
 struct spy_listening_s {
 	spy_socket_t fd;
 
+	spy_log_t *log;
 	struct sockaddr *sockaddr;
 	socklen_t socklen; /* size of sockaddr */
 
@@ -22,8 +23,10 @@ struct spy_listening_s {
 	int rcvbuf;
 	int sndbuf;
 
+	unsigned open :1;
 	unsigned listen :1;
 	unsigned handshake :1; /* MySQL first init package */
+	unsigned remain :1;
 };
 
 struct spy_connection_s {
@@ -41,6 +44,8 @@ struct spy_connection_s {
 	off_t sent;
 
 	spy_listening_t *listening;
+	spy_connection_t *pool;
+	size_t pool_size;
 
 	spy_log_t *log;
 
@@ -51,6 +56,7 @@ struct spy_connection_s {
 
 	unsigned sndlowat :1;
 	unsigned error :1;
+	unsigned ignore :1;
 	unsigned log_error :3; /* ngx_connection_log_error_e */
 };
 
@@ -65,15 +71,16 @@ spy_free_connection(spy_connection_t *c);
 spy_connection_t *
 spy_get_connection(spy_socket_t s, spy_log_t *log);
 
-spy_int_t
-spy_open_listening_sockets(spy_global_t *proxy);
+spy_int_t spy_open_listening_sockets(spy_global_t *global);
 
 spy_listening_t *
-spy_create_listening(void *sockaddr, socklen_t socklen, size_t index);
+spy_create_listening(spy_global_t *global, void *sockaddr, socklen_t socklen);
 
 spy_int_t
 spy_connection_error(spy_connection_t *c, spy_err_t err, char *text);
 
 void spy_close_connection(spy_connection_t *c);
+
+void spy_close_listening_sockets(spy_global_t *global);
 
 #endif

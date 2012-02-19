@@ -7,6 +7,7 @@
 #define SPY_IO_SENDFILE    1
 
 spy_int_t spy_os_specific_init(spy_log_t *log);
+spy_int_t spy_os_init(spy_log_t *log);
 
 typedef ssize_t (*spy_recv_pt)(spy_connection_t *c, u_char *buf, size_t size);
 typedef ssize_t (*spy_send_pt)(spy_connection_t *c, u_char *buf, size_t size);

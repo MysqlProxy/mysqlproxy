@@ -64,7 +64,7 @@ static void spy_proxy_send_acl(spy_event_t *ev) {
 
 	if (r->init_packet == NULL) {
 
-		r->init_packet = spy_create_temp_buf(52);
+		r->init_packet = spy_create_temp_buf(c->pool, 52);
 		if (r->init_packet == NULL) {
 			spy_proxy_close_request(r);
 			return;

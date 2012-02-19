@@ -33,13 +33,19 @@
 #define SPY_LOG_DEBUG_EVENT		  0x800
 #define SPY_LOG_DEBUG_PROXY		  0xF00
 
+#define SPY_LOG_DEBUG_LEN         10
+
 // 日志记录的最大字符串长度
 #define SPY_MAX_ERROR_STR	2048
+
+// 日志路径
+extern u_char *SPY_LOG_ERR_PATH;
+extern spy_uint_t spy_use_stderr;
 
 // 日志结构体
 struct spy_log_s {
 	spy_uint_t log_level;
-	spy_log_file_t *file;
+	spy_open_file_t *file;
 
 	//ngx_log_handler_pt   handler;
 	void *data;
@@ -49,7 +55,7 @@ struct spy_log_s {
  * 日志初始化函数，filename设置日志的文件名
  */
 spy_log_t *
-spy_log_init(u_char *filename);
+spy_log_init(u_char *prefix);
 
 /*
  * 打印错误码详细信息

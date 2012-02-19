@@ -5,34 +5,46 @@
 spy_os_io_t spy_io;
 
 spy_listening_t *
-spy_create_listening(void *sockaddr, socklen_t socklen, size_t index) {
+spy_create_listening(spy_global_t *global, void *sockaddr, socklen_t socklen) {
 
 	size_t len;
 	spy_listening_t *ls;
 	struct sockaddr *sa;
 	u_char text[SPY_SOCKADDR_STRLEN];
 
-	ls = spy_global->listening[index];
-	sa = malloc(socklen);
-	spy_memcpy(sa, sockaddr, socklen);
+	// 取一个listen_t
+	ls = spy_array_push(&global->listening);
+	if (ls == NULL) {
+		return NULL;
+	}
+
 	spy_memzero(ls, sizeof(spy_listening_t));
+
+	sa = spy_palloc(global->pool, socklen);
+	if (sa == NULL) {
+		return NULL;
+	}
+
+	spy_memcpy(sa, sockaddr, socklen);
+
 	ls->sockaddr = sa;
 	ls->socklen = socklen;
-	ls->fd = (spy_socket_t) -1;
-	ls->type = SOCK_STREAM;
-	ls->backlog = SPY_LISTEN_BACKLOG;
-	ls->addr_text_max_len = SPY_INET_ADDRSTRLEN;
-	ls->addr_ntop = 1;
+
 	len = spy_sock_ntop(sa, text, SPY_SOCKADDR_STRLEN, 1);
 	ls->addr_text.len = len;
+	ls->addr_text_max_len = SPY_INET_ADDRSTRLEN;
 
-	ls->addr_text.data = malloc(len);
+	ls->addr_text.data = spy_pnalloc(global->pool, len);
 	if (ls->addr_text.data == NULL) {
 		return NULL;
 	}
 
 	spy_memcpy(ls->addr_text.data, text, len);
 
+	ls->fd = (spy_socket_t) -1;
+	ls->type = SOCK_STREAM;
+
+	ls->backlog = SPY_LISTEN_BACKLOG;
 	ls->rcvbuf = -1;
 	ls->sndbuf = -1;
 
@@ -40,36 +52,36 @@ spy_create_listening(void *sockaddr, socklen_t socklen, size_t index) {
 
 }
 
-spy_int_t spy_open_listening_sockets(spy_global_t *proxy) {
+spy_int_t spy_open_listening_sockets(spy_global_t *global) {
 
 	int reuseaddr;
 	spy_uint_t i, tries, failed;
 	spy_err_t err;
 	spy_socket_t s;
-	spy_listening_t **ls;
+	spy_listening_t *ls;
 	spy_log_t *log;
 
 	reuseaddr = 1;
-	log = proxy->log;
+	log = global->log;
 
 	for (tries = 5; tries; tries--) {
 		failed = 0;
 
 		/* for each listening socket */
 
-		ls = proxy->listening;
-		for (i = 0; i < proxy->listening_n; i++) {
+		ls = global->listening.elts;
+		for (i = 0; i < global->listening.nelts; i++) {
 
-			if (ls[i]->fd != -1) {
+			if (ls[i].fd != -1) {
 				continue;
 			}
 
 			// 建立套接字
-			s = spy_socket(ls[i]->sockaddr->sa_family, ls[i]->type, 0);
+			s = spy_socket(ls[i].sockaddr->sa_family, ls[i].type, 0);
 
 			if (s == -1) {
 				spy_log_error(SPY_LOG_EMERG, log, spy_socket_errno,
-						spy_socket_n " %V failed", &ls[i]->addr_text);
+						spy_socket_n " %V failed", &ls[i].addr_text);
 				return SPY_ERROR;
 			}
 
@@ -77,11 +89,11 @@ spy_int_t spy_open_listening_sockets(spy_global_t *proxy) {
 			if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR,
 					(const void *) &reuseaddr, sizeof(int)) == -1) {
 				spy_log_error(SPY_LOG_EMERG, log, spy_socket_errno,
-						"setsockopt(SO_REUSEADDR) %S failed", &ls[i]->addr_text);
+						"setsockopt(SO_REUSEADDR) %S failed", &ls[i].addr_text);
 
 				if (spy_close_socket(s) == -1) {
 					spy_log_error(SPY_LOG_EMERG, log, spy_socket_errno,
-							spy_close_socket_n, " %S failed", &ls[i]->addr_text);
+							spy_close_socket_n, " %S failed", &ls[i].addr_text);
 				}
 
 				return SPY_ERROR;
@@ -90,21 +102,21 @@ spy_int_t spy_open_listening_sockets(spy_global_t *proxy) {
 			// 设置套接字非阻塞
 			if (spy_nonblocking(s) == -1) {
 				spy_log_error(SPY_LOG_EMERG, log, spy_socket_errno,
-						spy_nonblocking_n " %S failed", ls[i]->addr_text);
+						spy_nonblocking_n " %S failed", ls[i].addr_text);
 
 				if (spy_close_socket(s) == -1) {
 					spy_log_error(SPY_LOG_EMERG, log, spy_socket_errno,
-							spy_close_socket_n " %S failed", ls[i]->addr_text);
+							spy_close_socket_n " %S failed", ls[i].addr_text);
 				}
 
 				return SPY_ERROR;
 			}
 
 			spy_log_debug(SPY_LOG_DEBUG_CORE, log, 0, "bind() %S #%d ",
-					&ls[i]->addr_text, s);
+					&ls[i].addr_text, s);
 
 			// 绑定
-			if (bind(s, ls[i]->sockaddr, ls[i]->socklen) == -1) {
+			if (bind(s, ls[i].sockaddr, ls[i].socklen) == -1) {
 				err = spy_socket_errno;
 
 				if (err == SPY_EADDRINUSE) {
@@ -112,11 +124,11 @@ spy_int_t spy_open_listening_sockets(spy_global_t *proxy) {
 				}
 
 				spy_log_error(SPY_LOG_EMERG, log, err, "bind() to %V failed",
-						&ls[i]->addr_text);
+						&ls[i].addr_text);
 
 				if (spy_close_socket(s) == -1) {
 					spy_log_error(SPY_LOG_EMERG, log, spy_socket_errno,
-							spy_close_socket_n, " %S failed", &ls[i]->addr_text);
+							spy_close_socket_n, " %S failed", &ls[i].addr_text);
 				}
 
 				if (err != SPY_EADDRINUSE) {
@@ -129,22 +141,22 @@ spy_int_t spy_open_listening_sockets(spy_global_t *proxy) {
 			}
 
 			// 监听
-			if (listen(s, ls[i]->backlog) == -1) {
+			if (listen(s, ls[i].backlog) == -1) {
 				spy_log_error(SPY_LOG_EMERG, log, spy_socket_errno,
-						"listen() to %V, backlog %d failed", &ls[i]->addr_text,
-						ls[i]->backlog);
+						"listen() to %V, backlog %d failed", &ls[i].addr_text,
+						ls[i].backlog);
 
 				if (spy_close_socket(s) == -1) {
 					spy_log_error(SPY_LOG_EMERG, log, spy_socket_errno,
-							spy_close_socket_n, " %S failed", &ls[i]->addr_text);
+							spy_close_socket_n, " %S failed", &ls[i].addr_text);
 				}
 
 				return SPY_ERROR;
 			}
 
-			ls[i]->listen = 1;
+			ls[i].listen = 1;
+			ls[i].fd = s;
 
-			ls[i]->fd = s;
 		}
 
 		if (!failed) {
@@ -280,6 +292,42 @@ void spy_close_connection(spy_connection_t *c) {
 
 		spy_log_error(SPY_LOG_ERR, spy_global->log, err,
 				spy_close_socket_n " %d failed", fd);
+	}
+}
+
+void spy_close_listening_sockets(spy_global_t *global) {
+	spy_uint_t i;
+	spy_listening_t *ls;
+	spy_connection_t *c;
+
+	ngx_accept_mutex_held = 0;
+	ngx_use_accept_mutex = 0;
+
+	ls = global->listening.elts;
+	for (i = 0; i < global->listening.nelts; i++) {
+
+		c = ls[i].connection;
+
+		if (c) {
+
+			if (c->read->active) {
+				spy_del_event(c->read, SPY_READ_EVENT);
+			}
+
+			spy_free_connection(c);
+
+			c->fd = (spy_socket_t) -1;
+		}
+
+		spy_log_debug(SPY_LOG_DEBUG_CORE, global->log, 0,
+				"close listening %S #%d ", &ls[i].addr_text, ls[i].fd);
+
+		if (spy_close_socket(ls[i].fd) == -1) {
+			spy_log_error(SPY_LOG_EMERG, global->log, spy_socket_errno,
+					spy_close_socket_n " %S failed", &ls[i].addr_text);
+		}
+
+		ls[i].fd = (spy_socket_t) -1;
 	}
 }
 

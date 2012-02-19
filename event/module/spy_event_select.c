@@ -24,11 +24,14 @@ static spy_int_t spy_select_init(spy_global_t *global) {
 		nevents = 0;
 	}
 
-	// 分配读 + 写时间的event
-	index = spy_alloc(sizeof(spy_event_t *) * 2 * global->connection_n,
-			global->log);
-	if (index == NULL) {
-		return SPY_ERROR;
+	if (global->old_global == NULL || global->old_global->connection_n
+			< global->connection_n) {
+		// 分配读 + 写时间的event
+		index = spy_alloc(sizeof(spy_event_t *) * 2 * global->connection_n,
+				global->log);
+		if (index == NULL) {
+			return SPY_ERROR;
+		}
 	}
 
 	// 分配n个event

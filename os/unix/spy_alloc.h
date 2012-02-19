@@ -6,10 +6,11 @@
 
 #define spy_free          free
 
-void *
-spy_alloc(size_t size, spy_log_t *log);
+void *spy_alloc(size_t size, spy_log_t *log);
+void *spy_calloc(size_t size, spy_log_t *log);
 
-void *
-spy_calloc(size_t size, spy_log_t *log);
+void *spy_memalign(size_t alignment, size_t size, spy_log_t *log);
+
+extern spy_uint_t spy_pagesize;
 
 #endif

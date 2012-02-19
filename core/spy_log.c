@@ -2,8 +2,9 @@
 #include <spy_config.h>
 
 static spy_log_t spy_log;
-static spy_log_file_t spy_log_file;
+static spy_open_file_t spy_log_file;
 spy_uint_t spy_use_stderr = 1;
+u_char *SPY_LOG_ERR_PATH = (u_char *) "spy.log";
 
 static spy_str_t err_levels[] = { spy_null_string, spy_string("emerg"),
 		spy_string("alert"), spy_string("crit"), spy_string("error"),
@@ -130,36 +131,71 @@ spy_log_stdout(const char *fmt, ...) {
 }
 
 spy_log_t *
-spy_log_init(u_char *filename) {
+spy_log_init(u_char *prefix) {
+
+	u_char *p, *name;
+	size_t nlen, plen;
 
 	spy_log.file = &spy_log_file;
 	spy_log.log_level = SPY_LOG_ERR;
 
+	name = SPY_LOG_ERR_PATH;
+
 	// 空名字直接打拼到标准错误输出
-	if (!spy_strlen(filename)) {
+	nlen = spy_strlen(name);
+	if (nlen == 0) {
 		spy_log_file.fd = spy_stderr;
 		return &spy_log;
 	}
 
-#if 0
+	p = NULL;
 	// 非绝对路径，使用SPY_LOG_PREFIX
 	if (name[0] != '/') {
-#ifdef SPY_LOG_PREFIX
-#else
-#endif
 
-	} else {
+		if (prefix) {
+			plen = spy_strlen(prefix);
+		} else {
+#ifdef SPY_PREFIX
+			prefix = (u_char *) SPY_PREFIX;
+			plen = spy_strlen(prefix);
+#else
+			plen = 0;
+#endif
+		}
+
+		// 填充新名
+		if (plen) {
+			name = malloc(plen + nlen + 2);
+			if (name == NULL) {
+				return NULL;
+			}
+
+			p = spy_cpymem(name, prefix, plen);
+
+			if (!spy_path_separator(*(p - 1))) {
+				*p++ = '/';
+			}
+
+			spy_cpystrn(p, name, nlen + 1);
+
+			p = name;
+		}
 
 	}
-#endif
 
 	// 打开文件
 	spy_log.file->fd
-			= spy_open_file(filename, SPY_FILE_APPEND | SPY_FILE_CREATE_OR_OPEN,
+			= spy_open_file(name, SPY_FILE_APPEND, SPY_FILE_CREATE_OR_OPEN,
 					SPY_FILE_DEFAULT_ACCESS);
 	if (spy_log_file.fd == SPY_INVALID_FILE) {
 		spy_log_stderr(spy_errno, "[error] could not open error log file: "
-		spy_open_file_n " \"%s\" failed", filename);
+		spy_open_file_n " \"%s\" failed", name);
+
+		spy_log_file.fd = spy_stderr;
+	}
+
+	if (p) {
+		spy_free(p);
 	}
 
 	return &spy_log;

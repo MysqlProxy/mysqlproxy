@@ -7,3 +7,10 @@ spy_int_t spy_os_specific_init(spy_log_t *log) {
 
 	return SPY_OK;
 }
+
+spy_int_t spy_os_init(spy_log_t *log) {
+
+	spy_pagesize = getpagesize();
+
+	return SPY_OK;
+}

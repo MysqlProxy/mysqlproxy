@@ -4,8 +4,13 @@
 #define SPY_OK					0
 #define SPY_ERROR   			-1
 #define SPY_AGAIN      			-2
+#define SPY_DECLINED            -5
 
+typedef struct spy_pool_s spy_pool_t;
+typedef struct spy_array_s spy_array_t;
+typedef struct spy_open_file_s spy_open_file_t;
 typedef struct spy_log_s spy_log_t;
+typedef struct spy_file_s spy_file_t;
 typedef struct spy_log_file_s spy_log_file_t;
 typedef struct spy_connection_s spy_connection_t;
 typedef struct spy_listening_s spy_listening_t;
@@ -29,6 +34,9 @@ typedef void (*spy_event_handler_pt)(spy_event_t *ev);
 #include <spy_string.h>
 #include <spy_queue.h>
 #include <spy_math.h>
+#include <spy_palloc.h>
+#include <spy_array.h>
+#include <spy_list.h>
 #include <spy_buf.h>
 #include <spy_files.h>
 #include <spy_file.h>
@@ -46,5 +54,6 @@ typedef void (*spy_event_handler_pt)(spy_event_t *ev);
 #include <spy_global.h>
 #include <spy_os.h>
 #include <spy_connection.h>
+#include <spy_process.h>
 
 #endif

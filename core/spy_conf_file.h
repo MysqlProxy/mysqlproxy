@@ -20,20 +20,33 @@ struct spy_conf_s {
 
 	spy_conf_handler_pt handler;
 
+	spy_pool_t *pool;
 	spy_log_t *log;
 };
 
 struct spy_core_conf_s {
-	spy_uint_t port;
-	spy_uint_t timeout;
-	spy_uint_t listen_n;
-	u_char (*listen)[SPY_INET_ADDRSTRLEN];
-	spy_uint_t max_conn;
+	spy_array_t listen_addr;
+	spy_array_t debug_level;
+	spy_str_t error_log;
+	spy_str_t error_level;
+	spy_uint_t worker_connections;
+};
+
+struct spy_open_file_s {
+	spy_fd_t fd;
+	spy_str_t name;
+
+	u_char *buffer;
+	u_char *pos;
+	u_char *last;
 };
 
 spy_int_t spy_conf_init(spy_global_t *global);
+spy_open_file_t *
+spy_conf_open_file(spy_global_t *global, spy_str_t *name);
+spy_int_t spy_conf_full_name(spy_global_t *global, spy_str_t *name,
+		spy_uint_t conf_prefix);
 
-#define spy_get_core_conf_data(global)	global->conf[SPY_CORE_CONF].data
-#define spy_get_core_conf(global)	global->conf[SPY_CORE_CONF]
+#define spy_get_core_conf(global)	global->conf[SPY_CORE_CONF].data
 
 #endif

@@ -143,9 +143,8 @@ spy_int_t spy_event_init(spy_global_t *global) {
 	global->free_connection_n = global->connection_n;
 
 	// 为监听分配连接
-	ls = global->listening;
-
-	for (i = 0; i < global->listening_n; i++) {
+	ls = global->listening.elts;
+	for (i = 0; i < global->listening.nelts; i++) {
 
 		c = spy_get_connection(ls[i]->fd, global->log);
 
@@ -153,11 +152,13 @@ spy_int_t spy_event_init(spy_global_t *global) {
 			return SPY_ERROR;
 		}
 
+		c->log = global->log;
 		c->listening = ls[i];
 		ls[i]->connection = c;
 
 		rev = c->read;
 		rev->accept = 1;
+		rev->log = global->log;
 
 		rev->handler = spy_event_accept;
 

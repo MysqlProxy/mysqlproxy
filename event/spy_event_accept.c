@@ -8,7 +8,6 @@ void spy_event_accept(spy_event_t *ev) {
 
 	socklen_t socklen;
 	spy_err_t err;
-	//spy_log_t *log;
 	spy_socket_t s;
 	spy_event_t *rev, *wev;
 	spy_listening_t *ls;
@@ -18,7 +17,7 @@ void spy_event_accept(spy_event_t *ev) {
 	lc = ev->data;
 	ls = lc->listening;
 
-	spy_log_debug(SPY_LOG_DEBUG_EVENT, ev->log, 0, "accept on %V, ready: %d",
+	spy_log_debug(SPY_LOG_DEBUG_EVENT, ev->log, 0, "accept on %S, ready: %d",
 			&ls->addr_text, ev->available);
 
 	do {
@@ -59,15 +58,13 @@ void spy_event_accept(spy_event_t *ev) {
 			return;
 		}
 
-		/*
-		 c->pool = ngx_create_pool(ls->pool_size, ev->log);
-		 if (c->pool == NULL) {
-		 ngx_close_accepted_connection(c);
-		 return;
-		 }
-		 */
+		c->pool = spy_create_pool(ls->pool_size, ev->log);
+		if (c->pool == NULL) {
+			spy_close_accepted_connection(c);
+			return;
+		}
 
-		c->sockaddr = spy_alloc(socklen, c->log);
+		c->sockaddr = ngx_palloc(c->pool, socklen);
 		if (c->sockaddr == NULL) {
 			spy_close_accepted_connection(c);
 			return;
@@ -75,38 +72,20 @@ void spy_event_accept(spy_event_t *ev) {
 
 		spy_memcpy(c->sockaddr, sa, socklen);
 
-		/*
-		 log = ngx_palloc(c->pool, sizeof(ngx_log_t));
-		 if (log == NULL) {
-		 spy_close_accepted_connection(c);
-		 return;
-		 }
-
-		 *log = ls->log;
-
-		 c->log = log;
-		 c->pool->log = log;
-		 */
-
 		c->recv = spy_recv;
 		c->send = spy_send;
 		c->socklen = socklen;
 		c->listening = ls;
-		//c->local_sockaddr = ls->sockaddr;
-
-		//c->unexpected_eof = 1;
 
 		rev = c->read;
 		wev = c->write;
-		//wev->handler = spy_proxy_send_acl;
+		wev->ready = 1;
 
-		// 发送第一个auth握手包
 		rev->log = ev->log;
 		wev->log = ev->log;
-		wev->handler = NULL;
 
 		if (ls->addr_ntop) {
-			c->addr_text.data = spy_alloc(ls->addr_text_max_len, c->log);
+			c->addr_text.data = spy_palloc(c->pool, ls->addr_text_max_len);
 			if (c->addr_text.data == NULL) {
 				spy_close_accepted_connection(c);
 				return;
@@ -120,10 +99,9 @@ void spy_event_accept(spy_event_t *ev) {
 			}
 		}
 
-		//spy_log_debug(SPY_LOG_DEBUG_EVENT, log, 0, "*%d accept: %V fd:%d",c->number, &c->addr_text, s);
+		spy_log_debug(SPY_LOG_DEBUG_EVENT, log, 0, "*%d accept: %S fd:%d",
+				c->number, &c->addr_text, s);
 
-
-		// proxy:监听写监听，发送第一个初始化握手包
 		ls->handler(c);
 
 		ev->available = 0;

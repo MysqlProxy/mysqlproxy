@@ -189,6 +189,24 @@ spy_vslprintf(u_char *buf, u_char *last, const char *fmt, va_list args) {
 				}
 				break;
 			case 'p':
+				ui64 = (uintptr_t) va_arg (args, void *);
+				hex = 2;
+				sign = 0;
+				zero = '0';
+				width = 8 * 2;
+				break;
+
+			case 'P':
+				i64 = (int64_t) va_arg(args, spy_pid_t);
+				sign = 1;
+				break;
+
+			case 'z':
+				if (sign) {
+					i64 = (int64_t) va_arg(args, ssize_t);
+				} else {
+					ui64 = (uint64_t) va_arg (args, size_t);
+				}
 				break;
 
 			case 'f':
@@ -332,6 +350,42 @@ spy_sprintf_num(uint64_t ui64, u_char zero, spy_uint_t align, spy_uint_t hex,
 
 	return pnum;
 	//len = (size_t) spy_min((last - buf), (temp + SPY_INT64_LEN) - p);
+}
+
+u_char *
+spy_pstrdup(spy_pool_t *pool, spy_str_t *src) {
+	u_char *dst;
+
+	dst = spy_pnalloc(pool, src->len);
+	if (dst == NULL) {
+		return NULL;
+	}
+
+	spy_memcpy(dst, src->data, src->len);
+
+	return dst;
+}
+
+u_char *
+spy_cpystrn(u_char *dst, u_char *src, size_t n) {
+	if (n == 0) {
+		return dst;
+	}
+
+	while (--n) {
+		*dst = *src;
+
+		if (*dst == '\0') {
+			return dst;
+		}
+
+		dst++;
+		src++;
+	}
+
+	*dst = '\0';
+
+	return dst;
 }
 
 #ifdef _SPY_STRING_UNIT_TEST_
